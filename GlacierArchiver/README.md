@@ -44,7 +44,7 @@ The configuration file is a JSON file that needs to be on the classpath. It look
   ],
   "glacier":{
     "accessKey":"** your AWS access key **",
-    "secretKey":"** your AWS secret key",
+    "secretKey":"** your AWS secret key **",
     "endpoint":"https://glacier.us-west-2.amazonaws.com/",
     "vaultName":"** name of your AWS Glacier vault **"
   }
