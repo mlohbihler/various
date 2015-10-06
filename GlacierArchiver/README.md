@@ -15,40 +15,38 @@ This is intended to be run from a cron or something similar. To use it, you'll n
 
 The configuration file is a JSON file that needs to be on the classpath. It looks like this:
 
-{
-  "prefix":"nas-backup",
-  "maxFiles":5,
-  "password":"** the password for the secret key encryption **",
-  "smtp":{
-    "host":"smtp.gmail.com",
-    "port":587,
-    "useAuth":true,
-    "username":"** your username **",
-    "password":"** your password **",
-    "tls":true,
-    "to":"** email address to send to **",
-    "from":"** the email address from which to send - probably the same as username **"
-  },
-  "files":[
     {
-      "prefix":"Z:/",
-      "paths":[
-        "brooks",
-        "Madeline",
-        "Marcus",
-        "Matthew",
-        "Pictures",
-        "Wendy"
-      ]
+      "prefix":"nas-backup",
+      "maxFiles":5,
+      "password":"** the password for the secret key encryption **",
+      "smtp":{
+        "host":"smtp.gmail.com",
+        "port":587,
+        "useAuth":true,
+        "username":"** your username **",
+        "password":"** your password **",
+        "tls":true,
+        "to":"** email address to send to **",
+        "from":"** the email address from which to send - probably the same as username **"
+      },
+      "files":[
+        {
+          "prefix":"Z:/",  // Included to find the paths, but not in the zip file
+          "paths":[  // Paths are files or directories. Directories are deep-copied.
+            "dir1",
+            "dir2/subdir1",
+            "dir3",
+            "dir4"
+          ]
+        }
+      ],
+      "glacier":{
+        "accessKey":"** your AWS access key **",
+        "secretKey":"** your AWS secret key **",
+        "endpoint":"https://glacier.us-west-2.amazonaws.com/",
+        "vaultName":"** name of your AWS Glacier vault **"
+      }
     }
-  ],
-  "glacier":{
-    "accessKey":"** your AWS access key **",
-    "secretKey":"** your AWS secret key **",
-    "endpoint":"https://glacier.us-west-2.amazonaws.com/",
-    "vaultName":"** name of your AWS Glacier vault **"
-  }
-}
 
 # Execution
 
