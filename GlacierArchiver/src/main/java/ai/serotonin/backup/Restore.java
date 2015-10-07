@@ -45,7 +45,9 @@ public class Restore extends Base {
         retrieveArchive(latest.id, latest.filename);
 
         // Decrypt it
-        decryptFile(latest.filename);
+        File file = decryptFile(latest.filename);
+
+        sendEmail("Restore completed", "Restored file " + file.getName());
     }
 
     private void retrieveArchive(String id, String filename) throws Exception {
@@ -85,7 +87,7 @@ public class Restore extends Base {
         fos.close();
     }
 
-    void decryptFile(String filename) throws Exception {
+    File decryptFile(String filename) throws Exception {
         File encryptedFile = new File(filename);
 
         int pos = filename.indexOf('_');
@@ -108,5 +110,7 @@ public class Restore extends Base {
         cipherizeFile(encryptedFile, file, cipher);
 
         log.info("Decrypted archive to " + filename);
+
+        return file;
     }
 }

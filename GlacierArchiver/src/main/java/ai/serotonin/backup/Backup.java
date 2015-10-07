@@ -47,6 +47,7 @@ public class Backup extends Base {
         sendEmail("Backup successful", "" + backupFile.length() + " bytes uploaded");
         backupFile.delete();
         deleteOldBackups();
+        log.info("Backup process completed");
     }
 
     private File generateBackupFilename() {
