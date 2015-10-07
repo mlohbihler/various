@@ -2,11 +2,11 @@
 
 In short, this is a backup/restore mechanism.
 
-It's a very small Java app to zip up a set of directories, encrypt the file, and upload it to AWS Glacier. The code is
-functional, but little effort has been made to handle specific error conditions. Upon error is pretty much just logs to
-a file and/or emails the error details.
+It's a very small Java app to zip up a set of directories, encrypt the file, upload it to AWS Glacier, and send an email about what happened. The code is functional, but little effort has been made to handle specific error conditions. Upon error it pretty much just logs to a file and/or emails the error details.
 
-This is intended to be run from a cron or something similar. To use it, you'll need:
+The restore is similar. When run it gets an inventory of the vault, picks the latest file, retrieves it, and decrypts it, leaving the zip file in the current directory to do with as you wish. It also emails you when this process is done (or gets an error).
+
+The backup is intended to be run from a cron or something similar. To use it, you'll need:
 
 - An AWS account
 - An SMTP (to send confirmation or error emails)
@@ -23,8 +23,8 @@ The configuration file is a JSON file that needs to be on the classpath. It look
         "host":"smtp.gmail.com",
         "port":587,
         "useAuth":true,
-        "username":"** your username **",
-        "password":"** your password **",
+        "username":"** your email username **",
+        "password":"** your email password **",
         "tls":true,
         "to":"** email address to send to **",
         "from":"** the email address from which to send - probably the same as username **"
@@ -60,11 +60,13 @@ A file named 'log.txt' will be created that describes what happened during execu
 
 Note that some Glacier operations can take around 4 hours to complete. You will see log messages that look like "Job not completed. Waiting 15 minutes..." as it polls for job completion.
 
-To backup, run something along the lines of (*nix):
-java -classpath .:lib/* ai.serotonin.backup.Backup &
+To backup, run something along the lines of (\*nix):
 
-To restore the last file that was backed up, run (*nix):
-java -classpath .:lib/* ai.serotonin.backup.Restore &
+    java -classpath .:lib/* ai.serotonin.backup.Backup &
+
+To restore the last file that was backed up, run (\*nix):
+
+    java -classpath .:lib/* ai.serotonin.backup.Restore &
 
 The restore will leave the backup zip file in the current directory.
 
