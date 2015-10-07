@@ -128,54 +128,6 @@ public class Backup extends Base {
 
         log.info("Encrypted backup file to " + encryptedFile.getPath() + ", " + encryptedFile.length() + " bytes");
         return encryptedFile;
-
-        //                
-        //                
-        //                
-        //        
-        //        String password = configRoot.get("password").asText();
-        //        SecureRandom random = new SecureRandom();
-        //        byte[] salt = random.generateSeed(8);
-        //        String saltStr = Hex.encodeHexString(salt);
-        //
-        //        /* Derive the key, given password and salt. */
-        //        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        //        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
-        //        SecretKey tmp = factory.generateSecret(spec);
-        //        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-        //
-        //        /* Encrypt the file. */
-        //        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        //        cipher.init(Cipher.ENCRYPT_MODE, secret);
-        //        AlgorithmParameters params = cipher.getParameters();
-        //        byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
-        //        String ivStr = Hex.encodeHexString(iv);
-        //
-        //        File encryptedFile = new File(file.getParent(), saltStr + "_" + ivStr + "_" + file.getName());
-        //        FileInputStream fis = new FileInputStream(file);
-        //        FileOutputStream fos = new FileOutputStream(encryptedFile);
-        //
-        //        try {
-        //            byte[] inbuf = new byte[1028];
-        //            byte[] outbuf = new byte[2056];
-        //            int readCount, encCount;
-        //            while ((readCount = fis.read(inbuf)) != -1) {
-        //                encCount = cipher.update(inbuf, 0, readCount, outbuf);
-        //                fos.write(outbuf, 0, encCount);
-        //            }
-        //
-        //            encCount = cipher.doFinal(inbuf, 0, 0, outbuf);
-        //            fos.write(outbuf, 0, encCount);
-        //        }
-        //        finally {
-        //            IOUtils.closeQuietly(fis);
-        //            IOUtils.closeQuietly(fos);
-        //        }
-        //
-        //        file.delete();
-        //
-        //        log.info("Encrypted backup file to " + encryptedFile.getPath() + ", " + encryptedFile.length() + " bytes");
-        //        return encryptedFile;
     }
 
     private void copyToGlacier(File file) throws Exception {
