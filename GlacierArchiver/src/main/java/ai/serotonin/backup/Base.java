@@ -54,12 +54,18 @@ import com.serotonin.web.mail.EmailSender;
 abstract public class Base {
     static final Log log = LogFactory.getLog(Backup.class);
 
+    final String suffix;
     ObjectNode configRoot;
     EmailSender emailSender;
     AWSCredentials credentials;
     AmazonGlacierClient client;
 
-    Base() throws Exception {
+    Base(String[] args) throws Exception {
+        if (args.length > 0)
+            suffix = args[0];
+        else
+            suffix = "";
+
         // Initialize
         loadConfig();
         createSmtpClient();
@@ -67,7 +73,7 @@ abstract public class Base {
     }
 
     void execute() throws Exception {
-        File processLock = new File(".lock");
+        File processLock = new File(".lock" + suffix);
         if (processLock.exists()) {
             sendEmail("Backup/restore failure!", "Another process is already running. Aborting new run.");
             return;
@@ -79,7 +85,7 @@ abstract public class Base {
             lock(processLock);
 
             // Redirect output to file
-            fis = new FileOutputStream("log.txt", true);
+            fis = new FileOutputStream("log" + suffix + ".txt", true);
             out = new PrintStream(fis);
             System.setOut(out);
             System.setErr(out);
@@ -104,10 +110,16 @@ abstract public class Base {
     abstract void executeImpl() throws Exception;
 
     private void loadConfig() throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        InputStream in = Backup.class.getResourceAsStream("/config.json");
-        configRoot = mapper.readValue(in, ObjectNode.class);
-        in.close();
+        String name = "/config" + suffix + ".json";
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream in = Backup.class.getResourceAsStream(name);
+            configRoot = mapper.readValue(in, ObjectNode.class);
+            in.close();
+        }
+        catch (Exception e) {
+            throw new Exception("Failed to load " + name, e);
+        }
     }
 
     private void createSmtpClient() {

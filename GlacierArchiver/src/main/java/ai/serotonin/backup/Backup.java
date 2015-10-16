@@ -38,11 +38,11 @@ public class Backup extends Base {
     static final Log log = LogFactory.getLog(Backup.class);
 
     public static void main(String[] args) throws Exception {
-        new Backup().execute();
+        new Backup(args).execute();
     }
 
-    public Backup() throws Exception {
-        super();
+    public Backup(String[] args) throws Exception {
+        super(args);
     }
 
     @Override

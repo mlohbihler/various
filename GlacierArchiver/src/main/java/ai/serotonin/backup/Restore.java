@@ -27,11 +27,11 @@ import com.amazonaws.services.glacier.model.ResourceNotFoundException;
 
 public class Restore extends Base {
     public static void main(String[] args) throws Exception {
-        new Restore().execute();
+        new Restore(args).execute();
     }
 
-    public Restore() throws Exception {
-        super();
+    public Restore(String[] args) throws Exception {
+        super(args);
     }
 
     @Override
