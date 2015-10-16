@@ -45,6 +45,7 @@ import com.amazonaws.services.glacier.model.InitiateJobRequest;
 import com.amazonaws.services.glacier.model.InitiateJobResult;
 import com.amazonaws.services.glacier.model.JobParameters;
 import com.amazonaws.services.glacier.model.ResourceNotFoundException;
+import com.amazonaws.util.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -208,6 +209,17 @@ abstract public class Base {
         return configRoot.get("glacier").get("vaultName").asText();
     }
 
+    String getArchivePassword() {
+        if (!configRoot.has("password"))
+            return null;
+
+        String password = configRoot.get("password").asText();
+        if (StringUtils.isNullOrEmpty(password))
+            return null;
+
+        return password;
+    }
+
     void waitForJob(String vaultName, String jobId) throws Exception {
         while (true) {
             DescribeJobResult describeJobResult = client.describeJob(new DescribeJobRequest(vaultName, jobId));
@@ -224,7 +236,7 @@ abstract public class Base {
     }
 
     SecretKey createSecretKey(byte[] salt) throws Exception {
-        String password = configRoot.get("password").asText();
+        String password = getArchivePassword();
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
         SecretKey tmp = factory.generateSecret(spec);

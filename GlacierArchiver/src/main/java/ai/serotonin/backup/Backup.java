@@ -49,7 +49,8 @@ public class Backup extends Base {
     void executeImpl() throws Exception {
         File backupFile = generateBackupFilename();
         createBackup(backupFile);
-        backupFile = encryptFile(backupFile);
+        if (getArchivePassword() != null)
+            backupFile = encryptFile(backupFile);
         copyToGlacier(backupFile);
         sendEmail("Backup successful", "" + backupFile.length() + " bytes uploaded");
         backupFile.delete();

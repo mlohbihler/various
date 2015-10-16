@@ -23,7 +23,6 @@ import com.amazonaws.services.glacier.model.GetJobOutputResult;
 import com.amazonaws.services.glacier.model.InitiateJobRequest;
 import com.amazonaws.services.glacier.model.InitiateJobResult;
 import com.amazonaws.services.glacier.model.JobParameters;
-import com.amazonaws.services.glacier.model.ResourceNotFoundException;
 
 public class Restore extends Base {
     public static void main(String[] args) throws Exception {
@@ -49,15 +48,16 @@ public class Restore extends Base {
 
         // Retrieve the latest file
         Archive latest = archives.get(archives.size() - 1);
-        retrieveArchive(latest.id, latest.filename);
+        File file = retrieveArchive(latest.id, latest.filename);
 
-        // Decrypt it
-        File file = decryptFile(latest.filename);
+        if (getArchivePassword() != null)
+            // Decrypt it
+            file = decryptFile(file);
 
         sendEmail("Restore completed", "Restored file " + file.getName());
     }
 
-    private void retrieveArchive(String id, String filename) throws Exception {
+    private File retrieveArchive(String id, String filename) throws Exception {
         String vaultName = getVaultName();
 
         InitiateJobRequest initJobRequest = new InitiateJobRequest() //
@@ -69,17 +69,9 @@ public class Restore extends Base {
         //.withDescription("archive retrieval")
         );
 
-        String jobId;
-        try {
-            log.info("Initiating archive retrieval job...");
-            InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
-            jobId = initJobResult.getJobId();
-        }
-        catch (ResourceNotFoundException e) {
-            // Ignore. No inventory is available.
-            log.warn("Exception initiating archive retrieval: " + e.getErrorMessage());
-            return;
-        }
+        log.info("Initiating archive retrieval job...");
+        InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
+        String jobId = initJobResult.getJobId();
 
         // Wait for the job to complete.
         waitForJob(vaultName, jobId);
@@ -89,13 +81,16 @@ public class Restore extends Base {
         GetJobOutputRequest jobOutputRequest = new GetJobOutputRequest().withVaultName(vaultName).withJobId(jobId);
         GetJobOutputResult jobOutputResult = client.getJobOutput(jobOutputRequest);
 
-        FileOutputStream fos = new FileOutputStream(filename);
+        File file = new File(filename);
+        FileOutputStream fos = new FileOutputStream(file);
         IOUtils.copy(jobOutputResult.getBody(), fos);
         fos.close();
+
+        return file;
     }
 
-    File decryptFile(String filename) throws Exception {
-        File encryptedFile = new File(filename);
+    File decryptFile(File encryptedFile) throws Exception {
+        String filename = encryptedFile.getName();
 
         int pos = filename.indexOf('_');
         String saltStr = filename.substring(0, pos);
