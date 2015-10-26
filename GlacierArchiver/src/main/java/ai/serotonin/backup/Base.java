@@ -145,10 +145,12 @@ abstract public class Base {
     }
 
     void sendEmail(String subject, String content) {
+        String prefix = configRoot.get("prefix").asText();
+
         emailSender.send( //
                 configRoot.get("smtp").get("from").asText(), //
                 configRoot.get("smtp").get("to").asText(), //
-                subject, //
+                subject + " (" + prefix + ")", //
                 content, //
                 (String) null);
         log.info("Sent job completion email");
