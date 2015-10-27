@@ -146,6 +146,11 @@ public class Backup extends Base {
     }
 
     private void deleteOldBackups() throws Exception {
+        int maxFiles = configRoot.get("maxFiles").asInt();
+        if (maxFiles <= 0)
+            return;
+
+        String vaultName = getVaultName();
         List<Archive> archives = getInventory();
 
         if (archives == null)
@@ -154,17 +159,22 @@ public class Backup extends Base {
             Collections.sort(archives);
             log.info("Found " + archives.size() + " archives in inventory");
 
-            String vaultName = getVaultName();
-            int maxFiles = configRoot.get("maxFiles").asInt();
-
-            for (int i = 0; i + maxFiles < archives.size(); i++) {
-                Archive archive = archives.get(i);
+            while (archives.size() > maxFiles) {
+                Archive archive = archives.remove(0);
                 log.info("Purging archive named " + archive.filename);
                 DeleteArchiveRequest request = new DeleteArchiveRequest() //
                         .withVaultName(vaultName) //
                         .withArchiveId(archive.id);
                 client.deleteArchive(request);
             }
+
+            StringBuilder sb = new StringBuilder();
+            for (Archive archive : archives) {
+                if (sb.length() > 0)
+                    sb.append(", ");
+                sb.append(archive.filename);
+            }
+            log.info("Keeping archive(s) named " + sb.toString());
         }
     }
 }
