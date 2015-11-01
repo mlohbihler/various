@@ -7,6 +7,7 @@
  */
 package ai.serotonin.backup;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -50,10 +51,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.ISO8601Utils;
+import com.serotonin.io.MulticastOutputStream;
 import com.serotonin.web.mail.EmailSender;
 
 abstract public class Base {
     static final Log log = LogFactory.getLog(Backup.class);
+
+    /**
+     * Used to store in memory the messages that are being written to the log. Allows the log messages to be written
+     * to the content of a result email.
+     */
+    ByteArrayOutputStream memoryLog;
 
     final String suffix;
     ObjectNode configRoot;
@@ -73,25 +81,40 @@ abstract public class Base {
         createGlacierClient();
     }
 
-    void execute() throws Exception {
+    void execute() {
         File processLock = new File(".lock" + suffix);
         if (processLock.exists()) {
             sendEmail("Backup/restore failure!", "Another process is already running. Aborting new run.");
             return;
         }
 
-        FileOutputStream fis = null;
-        PrintStream out = null;
+        MulticastOutputStream mos = null;
+        String emailSubject = null;
         try {
             lock(processLock);
 
-            // Redirect output to file
-            fis = new FileOutputStream("log" + suffix + ".txt", true);
-            out = new PrintStream(fis);
+            // Redirect output to file and memory log.
+            memoryLog = new ByteArrayOutputStream();
+
+            FileOutputStream logOut = new FileOutputStream("log" + suffix + ".txt", true);
+
+            mos = new MulticastOutputStream();
+            //            mos.setExceptionHandler(new IOExceptionHandler() {
+            //                @Override
+            //                public void ioException(OutputStream stream, IOException e) {
+            //                    e.printStackTrace(s);
+            //                }
+            //            });
+            mos.addStream(logOut);
+            mos.addStream(memoryLog);
+
+            PrintStream out = new PrintStream(mos);
+
             System.setOut(out);
             System.setErr(out);
 
             executeImpl();
+            emailSubject = "Backup/restore completion";
         }
         catch (Exception e) {
             log.error("An error occurred", e);
@@ -99,12 +122,16 @@ abstract public class Base {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            sendEmail("Backup/restore failure!", sw.toString());
+            emailSubject = "Backup/restore failure!";
         }
         finally {
+            // Send the result email
+            String content = new String(memoryLog.toByteArray());
+            sendEmail(emailSubject, content);
+
+            IOUtils.closeQuietly(mos);
+
             unlock(processLock);
-            IOUtils.closeQuietly(out);
-            IOUtils.closeQuietly(fis);
         }
     }
 
@@ -144,7 +171,7 @@ abstract public class Base {
                 .withEndpoint(endpoint);
     }
 
-    void sendEmail(String subject, String content) {
+    private void sendEmail(String subject, String content) {
         String prefix = configRoot.get("prefix").asText();
 
         emailSender.send( //

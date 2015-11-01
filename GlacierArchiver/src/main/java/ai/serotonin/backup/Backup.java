@@ -52,7 +52,7 @@ public class Backup extends Base {
         if (getArchivePassword() != null)
             backupFile = encryptFile(backupFile);
         copyToGlacier(backupFile);
-        sendEmail("Backup successful", "" + backupFile.length() + " bytes uploaded");
+        //sendEmail("Backup successful", "" + backupFile.length() + " bytes uploaded");
         backupFile.delete();
         deleteOldBackups();
         log.info("Backup process completed");

@@ -54,7 +54,8 @@ public class Restore extends Base {
             // Decrypt it
             file = decryptFile(file);
 
-        sendEmail("Restore completed", "Restored file " + file.getName());
+        log.info("Restore completed of file " + file.getName());
+        //sendEmail("Restore completed", "Restored file " + file.getName());
     }
 
     private File retrieveArchive(String id, String filename) throws Exception {

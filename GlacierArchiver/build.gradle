@@ -23,7 +23,7 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
     compile group: 'org.springframework', name: 'spring-context-support', version: '4.1.5.RELEASE'
     
-    compile name: 'serotonin-utils', version: '2.1.8'
+    compile name: 'serotonin-utils', version: '2.1.9'
 }
 
 uploadArchives {
