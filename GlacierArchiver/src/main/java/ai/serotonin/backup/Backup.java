@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (c) 2015, Matthew Lohbihler
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -25,6 +25,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,21 +60,21 @@ public class Backup extends Base {
     }
 
     private File generateBackupFilename() {
-        String prefix = configRoot.get("prefix").asText();
-        String ts = new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date());
+        final String prefix = configRoot.get("prefix").asText();
+        final String ts = new SimpleDateFormat("yyyyMMdd.HHmmss").format(new Date());
         return new File("./" + prefix + "-" + ts + ".zip");
     }
 
     private void createBackup(File filename) throws Exception {
         log.info("Creating backup file " + filename);
-        FileOutputStream out = new FileOutputStream(filename);
-        ZipOutputStream zip = new ZipOutputStream(out);
+        final FileOutputStream out = new FileOutputStream(filename);
+        final ZipOutputStream zip = new ZipOutputStream(out);
         try {
-            JsonNode files = configRoot.get("files");
-            for (JsonNode filesNode : files) {
-                String prefix = filesNode.get("prefix").asText();
-                JsonNode paths = filesNode.get("paths");
-                for (JsonNode path : paths)
+            final JsonNode files = configRoot.get("files");
+            for (final JsonNode filesNode : files) {
+                final String prefix = filesNode.get("prefix").asText();
+                final JsonNode paths = filesNode.get("paths");
+                for (final JsonNode path : paths)
                     addFile(zip, prefix, path.asText());
             }
         }
@@ -81,30 +82,30 @@ public class Backup extends Base {
             IOUtils.closeQuietly(zip);
             IOUtils.closeQuietly(out);
         }
-        log.info("Created backup file " + filename + ", " + filename.length() + " bytes");
+        log.info("Created backup file " + filename + ", " + FileUtils.byteCountToDisplaySize(filename.length()));
     }
 
     private void addFile(ZipOutputStream zip, String prefix, String path) throws IOException {
-        File file = new File(prefix, path);
+        final File file = new File(prefix, path);
         if (file.isFile())
             addZipEntry(zip, prefix, path);
         else {
-            String[] subFiles = file.list();
+            final String[] subFiles = file.list();
             if (subFiles != null) {
-                for (String subFile : subFiles)
+                for (final String subFile : subFiles)
                     addFile(zip, prefix, path + File.separator + subFile);
             }
         }
     }
 
     private void addZipEntry(ZipOutputStream zip, String prefix, String path) throws IOException {
-        ZipEntry e = new ZipEntry(path);
+        final ZipEntry e = new ZipEntry(path);
         zip.putNextEntry(e);
 
         FileInputStream in = null;
         try {
             in = new FileInputStream(new File(prefix, path));
-            long len = IOUtils.copy(in, zip);
+            final long len = IOUtils.copy(in, zip);
             if (log.isDebugEnabled())
                 log.debug("Wrote " + path + ", " + len + " bytes ");
         }
@@ -116,42 +117,43 @@ public class Backup extends Base {
     }
 
     private File encryptFile(File file) throws Exception {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = random.generateSeed(8);
-        String saltStr = Hex.encodeHexString(salt);
+        final SecureRandom random = new SecureRandom();
+        final byte[] salt = random.generateSeed(8);
+        final String saltStr = Hex.encodeHexString(salt);
 
-        SecretKey secret = createSecretKey(salt);
+        final SecretKey secret = createSecretKey(salt);
 
-        Cipher cipher = createCipher();
+        final Cipher cipher = createCipher();
         cipher.init(Cipher.ENCRYPT_MODE, secret);
-        AlgorithmParameters params = cipher.getParameters();
-        byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
-        String ivStr = Hex.encodeHexString(iv);
+        final AlgorithmParameters params = cipher.getParameters();
+        final byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
+        final String ivStr = Hex.encodeHexString(iv);
 
-        File encryptedFile = new File(file.getParent(), saltStr + "_" + ivStr + "_" + file.getName());
+        final File encryptedFile = new File(file.getParent(), saltStr + "_" + ivStr + "_" + file.getName());
 
         cipherizeFile(file, encryptedFile, cipher);
 
         file.delete();
 
-        log.info("Encrypted backup file to " + encryptedFile.getPath() + ", " + encryptedFile.length() + " bytes");
+        log.info("Encrypted backup file to " + encryptedFile.getPath() + ", "
+                + FileUtils.byteCountToDisplaySize(encryptedFile.length()));
         return encryptedFile;
     }
 
     private void copyToGlacier(File file) throws Exception {
-        String vaultName = getVaultName();
-        ArchiveTransferManager atm = new ArchiveTransferManager(client, credentials);
-        UploadResult result = atm.upload(vaultName, file.getName(), file);
+        final String vaultName = getVaultName();
+        final ArchiveTransferManager atm = new ArchiveTransferManager(client, credentials);
+        final UploadResult result = atm.upload(vaultName, file.getName(), file);
         log.info("Upload archive ID: " + result.getArchiveId());
     }
 
     private void deleteOldBackups() throws Exception {
-        int maxFiles = configRoot.get("maxFiles").asInt();
+        final int maxFiles = configRoot.get("maxFiles").asInt();
         if (maxFiles <= 0)
             return;
 
-        String vaultName = getVaultName();
-        List<Archive> archives = getInventory();
+        final String vaultName = getVaultName();
+        final List<Archive> archives = getInventory();
 
         if (archives == null)
             log.warn("Could not delete old backups");
@@ -160,16 +162,16 @@ public class Backup extends Base {
             log.info("Found " + archives.size() + " archives in inventory");
 
             while (archives.size() > maxFiles) {
-                Archive archive = archives.remove(0);
+                final Archive archive = archives.remove(0);
                 log.info("Purging archive named " + archive.filename);
-                DeleteArchiveRequest request = new DeleteArchiveRequest() //
+                final DeleteArchiveRequest request = new DeleteArchiveRequest() //
                         .withVaultName(vaultName) //
                         .withArchiveId(archive.id);
                 client.deleteArchive(request);
             }
 
-            StringBuilder sb = new StringBuilder();
-            for (Archive archive : archives) {
+            final StringBuilder sb = new StringBuilder();
+            for (final Archive archive : archives) {
                 if (sb.length() > 0)
                     sb.append(", ");
                 sb.append(archive.filename);
