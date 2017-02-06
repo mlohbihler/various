@@ -22,15 +22,6 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1461465766783</id>
-			<name></name>
-			<type>26</type>
-			<matcher>
-				<id>org.eclipse.ui.ide.multiFilter</id>
-				<arguments>1.0-projectRelativePath-matches-false-false-build</arguments>
-			</matcher>
-		</filter>
-		<filter>
 			<id>1461465766927</id>
 			<name></name>
 			<type>26</type>
