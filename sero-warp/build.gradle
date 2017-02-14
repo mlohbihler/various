@@ -1,0 +1,25 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+
+version = '1.0.0'
+
+repositories {
+    jcenter()
+    flatDir { dirs 'lib' }
+}
+
+dependencies {
+    compile ':sero-scheduler:1.+'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.slf4j:slf4j-simple:+'
+}
+
+task sourcesJar(group: 'build', type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task jacoco(group: 'verification', dependsOn: jacocoTestReport) {
+}
