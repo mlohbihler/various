@@ -8,7 +8,7 @@
 package lohbihler.warp;
 
 import java.time.Clock;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +17,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -33,6 +35,7 @@ import lohbihler.scheduler.ScheduledExecutorServiceVariablePool;
  */
 public class WarpScheduledExecutorService implements ScheduledExecutorService, ClockListener {
     private final WarpClock clock;
+    private final ExecutorService executorService;
     private final ScheduledExecutorServiceVariablePool delegate;
 
     private final List<ScheduleFutureImpl<?>> tasks = new ArrayList<>();
@@ -42,33 +45,33 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
         if (clock instanceof WarpClock) {
             this.clock = (WarpClock) clock;
             this.clock.addListener(this);
+            executorService = Executors.newCachedThreadPool();
             delegate = null;
         } else {
             this.clock = null;
+            executorService = null;
             delegate = new ScheduledExecutorServiceVariablePool(clock);
         }
     }
 
     @Override
-    public void clockUpdate(final Instant instant) {
+    public void clockUpdate(final LocalDateTime dateTime) {
         while (true) {
-            if (tasks.isEmpty())
-                break;
-
             // Poll for a task.
-            final ScheduleFutureImpl<?> task = tasks.get(0);
-            final long waitTime = task.getDelay(TimeUnit.MILLISECONDS);
-            if (waitTime > 0)
-                break;
-
-            // Remove the task
-            tasks.remove(0);
+            final ScheduleFutureImpl<?> task;
+            synchronized (tasks) {
+                if (tasks.isEmpty())
+                    break;
+                task = tasks.get(0);
+                final long waitTime = task.getDelay(TimeUnit.MILLISECONDS);
+                if (waitTime > 0)
+                    break;
+                // Remove the task
+                tasks.remove(0);
+            }
             if (!task.isCancelled()) {
                 // Execute the task
                 task.execute();
-                synchronized (task) {
-                    task.notifyAll();
-                }
             }
         }
     }
@@ -76,6 +79,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public void shutdown() {
         if (delegate == null) {
+            executorService.shutdown();
             clock.removeListener(this);
             shutdown = true;
         } else {
@@ -86,6 +90,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public List<Runnable> shutdownNow() {
         if (delegate == null) {
+            executorService.shutdownNow();
             clock.removeListener(this);
             shutdown = true;
 
@@ -117,7 +122,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public boolean awaitTermination(final long timeout, final TimeUnit unit) throws InterruptedException {
         if (delegate == null) {
-            return true;
+            return executorService.awaitTermination(timeout, unit);
         }
         return delegate.awaitTermination(timeout, unit);
     }
@@ -125,11 +130,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public <T> Future<T> submit(final Callable<T> task) {
         if (delegate == null) {
-            try {
-                return new SimpleFuture<>(task.call(), null);
-            } catch (final Exception e) {
-                return new SimpleFuture<>(null, e);
-            }
+            return executorService.submit(task);
         }
         return delegate.submit(task);
     }
@@ -137,8 +138,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public <T> Future<T> submit(final Runnable task, final T result) {
         if (delegate == null) {
-            task.run();
-            return new SimpleFuture<>(result, null);
+            return executorService.submit(task, result);
         }
         return delegate.submit(task, result);
     }
@@ -146,111 +146,102 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
     @Override
     public Future<?> submit(final Runnable task) {
         if (delegate == null) {
-            task.run();
-            return new SimpleFuture<>(null, null);
+            return executorService.submit(task);
         }
         return delegate.submit(task);
     }
 
-    static class SimpleFuture<T> implements Future<T> {
-        private final T result;
-        private final Exception ex;
-
-        public SimpleFuture(final T result, final Exception ex) {
-            this.result = result;
-            this.ex = ex;
-        }
-
-        @Override
-        public boolean cancel(final boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
-
-        @Override
-        public boolean isDone() {
-            return true;
-        }
-
-        @Override
-        public T get() throws InterruptedException, ExecutionException {
-            if (ex != null)
-                throw new ExecutionException(ex);
-            return result;
-        }
-
-        @Override
-        public T get(final long timeout, final TimeUnit unit)
-                throws InterruptedException, ExecutionException, TimeoutException {
-            return get();
-        }
-    }
-
     @Override
     public <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> tasks) throws InterruptedException {
-        throw new RuntimeException("not implemented");
+        if (delegate == null) {
+            return executorService.invokeAll(tasks);
+        }
+        return delegate.invokeAll(tasks);
     }
 
     @Override
     public <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> tasks, final long timeout,
             final TimeUnit unit) throws InterruptedException {
-        throw new RuntimeException("not implemented");
+        if (delegate == null) {
+            return executorService.invokeAll(tasks, timeout, unit);
+        }
+        return delegate.invokeAll(tasks, timeout, unit);
     }
 
     @Override
     public <T> T invokeAny(final Collection<? extends Callable<T>> tasks)
             throws InterruptedException, ExecutionException {
-        throw new RuntimeException("not implemented");
+        if (delegate == null) {
+            return executorService.invokeAny(tasks);
+        }
+        return delegate.invokeAny(tasks);
     }
 
     @Override
     public <T> T invokeAny(final Collection<? extends Callable<T>> tasks, final long timeout, final TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
-        throw new RuntimeException("not implemented");
+        if (delegate == null) {
+            return executorService.invokeAny(tasks, timeout, unit);
+        }
+        return delegate.invokeAny(tasks, timeout, unit);
     }
 
     @Override
     public void execute(final Runnable command) {
-        command.run();
+        if (delegate == null) {
+            executorService.execute(command);
+        } else {
+            delegate.execute(command);
+        }
     }
 
     @Override
     public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
-        return addTask(new OneTime(command, delay, unit));
+        if (delegate == null) {
+            return addTask(new OneTime(command, delay, unit));
+        }
+        return delegate.schedule(command, delay, unit);
     }
 
     @Override
     public <V> ScheduledFuture<V> schedule(final Callable<V> callable, final long delay, final TimeUnit unit) {
-        return addTask(new OneTimeCallable<>(callable, delay, unit));
+        if (delegate == null) {
+            return addTask(new OneTimeCallable<>(callable, delay, unit));
+        }
+        return delegate.schedule(callable, delay, unit);
     }
 
     @Override
     public ScheduledFuture<?> scheduleAtFixedRate(final Runnable command, final long initialDelay, final long period,
             final TimeUnit unit) {
-        return addTask(new FixedRate(command, initialDelay, period, unit));
+        if (delegate == null) {
+            return addTask(new FixedRate(command, initialDelay, period, unit));
+        }
+        return delegate.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay(final Runnable command, final long initialDelay, final long delay,
             final TimeUnit unit) {
-        return addTask(new FixedDelay(command, initialDelay, delay, unit));
+        if (delegate == null) {
+            return addTask(new FixedDelay(command, initialDelay, delay, unit));
+        }
+        return delegate.scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
     private <V> ScheduleFutureImpl<V> addTask(final ScheduleFutureImpl<V> task) {
-        if (task.getDelay(TimeUnit.MILLISECONDS) <= 0) {
-            // Run now
-            task.execute();
-        } else {
-            int index = Collections.binarySearch(tasks, task);
-            if (index < 0)
-                index = -index - 1;
-            tasks.add(index, task);
+        synchronized (tasks) {
+            if (task.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+                // Run now
+                executorService.submit(task.getRunnable());
+            } else {
+                int index = Collections.binarySearch(tasks, task);
+                if (index < 0)
+                    index = -index - 1;
+                tasks.add(index, task);
+            }
+            return task;
         }
-        return task;
     }
 
     abstract class ScheduleFutureImpl<V> implements ScheduledFuture<V> {
@@ -260,7 +251,11 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
         private volatile boolean cancelled;
         private volatile boolean done;
 
-        abstract void execute();
+        void execute() {
+            executorService.submit(() -> executeImpl());
+        }
+
+        abstract void executeImpl();
 
         abstract Runnable getRunnable();
 
@@ -372,7 +367,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
         }
 
         @Override
-        void execute() {
+        void executeImpl() {
             command.run();
             success(null);
         }
@@ -409,7 +404,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
         }
 
         @Override
-        void execute() {
+        void executeImpl() {
             command.run();
         }
 
@@ -476,7 +471,7 @@ public class WarpScheduledExecutorService implements ScheduledExecutorService, C
         }
 
         @Override
-        void execute() {
+        void executeImpl() {
             try {
                 success(command.call());
             } catch (final Exception e) {

@@ -7,7 +7,7 @@
  */
 package lohbihler.warp;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @FunctionalInterface
 public interface ClockListener {
@@ -15,5 +15,5 @@ public interface ClockListener {
      * @param instant
      *            the instant at which this method is called
      */
-    void clockUpdate(Instant instant);
+    void clockUpdate(LocalDateTime dateTime);
 }

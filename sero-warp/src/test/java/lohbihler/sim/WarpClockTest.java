@@ -12,7 +12,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,14 +35,14 @@ public class WarpClockTest {
     @Test
     public void listenerTest() {
         final WarpClock clock = new WarpClock();
-        final Instant start = clock.instant();
+        final LocalDateTime start = clock.getDateTime();
 
-        final AtomicReference<Instant> update = new AtomicReference<>(null);
+        final AtomicReference<LocalDateTime> update = new AtomicReference<>(null);
 
         final ClockListener listener = new ClockListener() {
             @Override
-            public void clockUpdate(final Instant instant) {
-                update.set(instant);
+            public void clockUpdate(final LocalDateTime dateTime) {
+                update.set(dateTime);
             }
         };
         clock.addListener(listener);
@@ -234,5 +237,20 @@ public class WarpClockTest {
         assertTrue(commandCompleted2.get());
         assertTrue(commandCompleted3.get());
         assertTrue(commandCompleted4.get());
+    }
+
+    @Test
+    public void gregorian() {
+        final WarpClock clock = new WarpClock();
+        clock.set(2115, Month.AUGUST, 8, 23, 58, 0);
+        final GregorianCalendar gc = new GregorianCalendar();
+        gc.setTimeInMillis(clock.millis());
+
+        assertEquals(2115, gc.get(Calendar.YEAR));
+        assertEquals(Calendar.AUGUST, gc.get(Calendar.MONTH));
+        assertEquals(8, gc.get(Calendar.DATE));
+        assertEquals(23, gc.get(Calendar.HOUR_OF_DAY));
+        assertEquals(58, gc.get(Calendar.MINUTE));
+        assertEquals(0, gc.get(Calendar.SECOND));
     }
 }

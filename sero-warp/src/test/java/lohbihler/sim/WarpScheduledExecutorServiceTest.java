@@ -33,27 +33,27 @@ import lohbihler.warp.WarpScheduledExecutorService;
 public class WarpScheduledExecutorServiceTest {
     private WarpClock clock;
     private Instant start;
-    private WarpScheduledExecutorService executorService;
+    private WarpScheduledExecutorService scheduler;
 
     @Before
     public void before() {
         clock = new WarpClock();
         start = clock.instant();
-        executorService = new WarpScheduledExecutorService(clock);
+        scheduler = new WarpScheduledExecutorService(clock);
     }
 
     @Test
     public void callables() throws InterruptedException {
-        final ScheduledFuture<Boolean> success = executorService.schedule(() -> true, 100, TimeUnit.MINUTES);
-        final ScheduledFuture<Boolean> timeout = executorService.schedule(() -> true, 100, TimeUnit.MINUTES);
-        final ScheduledFuture<Boolean> exception = executorService.schedule(() -> {
+        final ScheduledFuture<Boolean> success = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> timeout = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> exception = scheduler.schedule(() -> {
             throw new Exception("test ex");
         }, 100, TimeUnit.MINUTES);
-        final ScheduledFuture<Boolean> cancel = executorService.schedule(() -> true, 100, TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> cancel = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
 
         // Create threads to get future results.
         final AtomicBoolean successResult = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 assertTrue(success.get());
                 assertEquals(Duration.ofMinutes(100), Duration.between(start, clock.instant()));
@@ -61,10 +61,10 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         final AtomicBoolean timeoutResult = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 timeout.get(70, TimeUnit.MINUTES);
                 fail("Should have timed out");
@@ -74,10 +74,10 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         final AtomicBoolean exceptionResult = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 exception.get(101, TimeUnit.MINUTES);
                 fail("Should have thrown an exception");
@@ -88,10 +88,10 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         final AtomicBoolean cancelResult = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 cancel.get(51, TimeUnit.MINUTES);
                 fail("Should have been cancelled");
@@ -101,24 +101,18 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         // Let the threads get started
         Thread.sleep(5);
 
         // Advance the clock 50 minutes and cancel. Do so in a loop for more realistic testing.
-        for (int i = 0; i < 50; i++) {
-            clock.plusMinutes(1);
-            Thread.sleep(5);
-        }
+        clock.plus(50, TimeUnit.MINUTES, 5, TimeUnit.MINUTES, 20, 2);
         cancel.cancel(false);
-        Thread.sleep(5);
+        Thread.sleep(20);
 
         // Advance the clock another 50 minutes.
-        for (int i = 0; i < 50; i++) {
-            clock.plusMinutes(1);
-            Thread.sleep(5);
-        }
+        clock.plus(50, TimeUnit.MINUTES, 5, TimeUnit.MINUTES, 20, 5);
 
         assertFalse(success.isCancelled());
         assertFalse(timeout.isCancelled());
@@ -134,16 +128,14 @@ public class WarpScheduledExecutorServiceTest {
     @Test
     public void fixedRate() throws InterruptedException {
         final List<Instant> instants1 = new ArrayList<>();
-        final ScheduledFuture<?> future1 = executorService.scheduleAtFixedRate(() -> instants1.add(clock.instant()), 3,
-                2, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future1 = scheduler.scheduleAtFixedRate(() -> instants1.add(clock.instant()), 3, 2,
+                TimeUnit.MINUTES);
         final List<Instant> instants2 = new ArrayList<>();
-        final ScheduledFuture<?> future2 = executorService.scheduleAtFixedRate(() -> instants2.add(clock.instant()), 4,
-                2, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future2 = scheduler.scheduleAtFixedRate(() -> instants2.add(clock.instant()), 4, 2,
+                TimeUnit.MINUTES);
 
         // Run the minutes individually to ensure the runtimes.
-        for (int i = 0; i < 7; i++) {
-            clock.plusMinutes(1);
-        }
+        clock.plus(7, TimeUnit.MINUTES, 1, TimeUnit.MINUTES, 20, 0);
 
         assertEquals(3, instants1.size());
         assertEquals(Duration.ofMinutes(3), Duration.between(start, instants1.get(0)));
@@ -157,17 +149,19 @@ public class WarpScheduledExecutorServiceTest {
         // Advance the clock by multiple minutes. The instants in the list will all have the end time, not the proper
         // run times.
         clock.plusHours(1);
+        Thread.sleep(50);
         assertEquals(33, instants1.size());
         assertEquals(32, instants2.size());
 
         // Cancel a task, and ensure that no more runs occur.
         future1.cancel(false);
         clock.plusHours(1);
+        Thread.sleep(50);
         assertEquals(33, instants1.size());
         assertEquals(62, instants2.size());
 
         final AtomicBoolean cancelSuccess = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 future2.get();
                 fail("Should have thrown CancellationException");
@@ -176,7 +170,7 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         Thread.sleep(50);
         future2.cancel(false);
@@ -188,16 +182,14 @@ public class WarpScheduledExecutorServiceTest {
     @Test
     public void fixedDelay() throws InterruptedException {
         final List<Instant> instants1 = new ArrayList<>();
-        final ScheduledFuture<?> future1 = executorService.scheduleWithFixedDelay(() -> instants1.add(clock.instant()),
-                3, 2, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future1 = scheduler.scheduleWithFixedDelay(() -> instants1.add(clock.instant()), 3, 2,
+                TimeUnit.MINUTES);
         final List<Instant> instants2 = new ArrayList<>();
-        final ScheduledFuture<?> future2 = executorService.scheduleWithFixedDelay(() -> instants2.add(clock.instant()),
-                4, 2, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future2 = scheduler.scheduleWithFixedDelay(() -> instants2.add(clock.instant()), 4, 2,
+                TimeUnit.MINUTES);
 
         // Run the minutes individually to ensure the runtimes.
-        for (int i = 0; i < 7; i++) {
-            clock.plusMinutes(1);
-        }
+        clock.plus(7, TimeUnit.MINUTES, 1, TimeUnit.MINUTES, 20, 20);
 
         assertEquals(3, instants1.size());
         assertEquals(Duration.ofMinutes(3), Duration.between(start, instants1.get(0)));
@@ -210,17 +202,19 @@ public class WarpScheduledExecutorServiceTest {
 
         // Advance the clock by multiple minutes. Because these are delayed, each will have run only once.
         clock.plusHours(1);
+        Thread.sleep(50);
         assertEquals(4, instants1.size());
         assertEquals(3, instants2.size());
 
         // Cancel a task, and ensure that no more runs occur.
         future1.cancel(false);
         clock.plusHours(1);
+        Thread.sleep(50);
         assertEquals(4, instants1.size());
         assertEquals(4, instants2.size());
 
         final AtomicBoolean cancelSuccess = new AtomicBoolean(false);
-        new Thread(() -> {
+        scheduler.execute(() -> {
             try {
                 future2.get();
                 fail("Should have thrown CancellationException");
@@ -229,7 +223,7 @@ public class WarpScheduledExecutorServiceTest {
             } catch (final Exception e) {
                 fail(e.getMessage());
             }
-        }).start();
+        });
 
         Thread.sleep(50);
         future2.cancel(false);
@@ -242,31 +236,30 @@ public class WarpScheduledExecutorServiceTest {
     public void scheduled() {
         final List<Instant> instants = new ArrayList<>();
 
-        final ScheduledFuture<?> future = executorService.schedule(() -> instants.add(clock.instant()), 10,
-                TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 11, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 12, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 15, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 20, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 25, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 26, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 27, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 28, TimeUnit.MINUTES);
-        executorService.schedule((Runnable) () -> instants.add(clock.instant()), 30, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future = scheduler.schedule(() -> instants.add(clock.instant()), 10, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 11, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 12, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 15, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 20, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 25, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 26, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 27, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 28, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 30, TimeUnit.MINUTES);
 
-        clock.plusMinutes(9);
+        clock.plus(9, TimeUnit.MINUTES, 9, TimeUnit.MINUTES, 20, 10);
         assertEquals(0, instants.size());
 
-        clock.plusMinutes(1);
+        clock.plus(1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES, 20, 10);
         assertEquals(1, instants.size());
 
-        clock.plusMinutes(5);
+        clock.plus(5, TimeUnit.MINUTES, 5, TimeUnit.MINUTES, 20, 10);
         assertEquals(4, instants.size());
 
-        clock.plusMinutes(10);
+        clock.plus(10, TimeUnit.MINUTES, 10, TimeUnit.MINUTES, 20, 10);
         assertEquals(6, instants.size());
 
-        clock.plusMinutes(10);
+        clock.plus(10, TimeUnit.MINUTES, 10, TimeUnit.MINUTES, 20, 10);
         assertEquals(10, instants.size());
 
         assertEquals(Duration.ofMinutes(10), Duration.between(start, instants.get(0)));
@@ -289,12 +282,12 @@ public class WarpScheduledExecutorServiceTest {
     public void shutdownNow() {
         final AtomicInteger counter = new AtomicInteger(0);
 
-        executorService.schedule((Runnable) () -> counter.incrementAndGet(), 1, TimeUnit.MINUTES);
-        executorService.schedule(() -> counter.incrementAndGet(), 1, TimeUnit.MINUTES);
-        executorService.scheduleAtFixedRate(() -> counter.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
-        executorService.scheduleWithFixedDelay(() -> counter.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
+        scheduler.schedule((Runnable) () -> counter.incrementAndGet(), 1, TimeUnit.MINUTES);
+        scheduler.schedule(() -> counter.incrementAndGet(), 1, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(() -> counter.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
+        scheduler.scheduleWithFixedDelay(() -> counter.incrementAndGet(), 1, 1, TimeUnit.MINUTES);
 
-        final List<Runnable> runnables = executorService.shutdownNow();
+        final List<Runnable> runnables = scheduler.shutdownNow();
         for (final Runnable runnable : runnables) {
             runnable.run();
         }

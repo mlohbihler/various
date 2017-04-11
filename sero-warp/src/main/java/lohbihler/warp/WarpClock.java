@@ -10,9 +10,10 @@ package lohbihler.warp;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
@@ -22,16 +23,22 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class WarpClock extends Clock {
+    private final ZoneId zoneId;
     private LocalDateTime dateTime;
     private final List<ClockListener> listeners = new CopyOnWriteArrayList<>();
-    private ZoneOffset offset = ZoneOffset.UTC;
 
     public WarpClock() {
-        this(LocalDateTime.now());
+        this(ZoneId.systemDefault());
     }
 
-    public WarpClock(final LocalDateTime dateTime) {
+    public WarpClock(final ZoneId zoneId) {
+        this(zoneId, LocalDateTime.now(Clock.system(zoneId)));
+    }
+
+    public WarpClock(final ZoneId zoneId, final LocalDateTime dateTime) {
+        Objects.requireNonNull(zoneId, "zoneId");
         Objects.requireNonNull(dateTime, "dateTime");
+        this.zoneId = zoneId;
         this.dateTime = dateTime;
     }
 
@@ -43,12 +50,12 @@ public class WarpClock extends Clock {
     }
 
     public <V> TimeoutFuture<V> setTimeout(final Callable<V> callable, final long timeout, final TimeUnit timeUnit) {
-        final Instant deadline = dateTime.plusNanos(timeUnit.toNanos(timeout)).toInstant(offset);
+        final LocalDateTime deadline = dateTime.plusNanos(timeUnit.toNanos(timeout));
         final TimeoutFutureImpl<V> future = new TimeoutFutureImpl<>();
         final ClockListener listener = new ClockListener() {
             @Override
-            public void clockUpdate(final Instant instant) {
-                if (!instant.isBefore(deadline)) {
+            public void clockUpdate(final LocalDateTime dateTime) {
+                if (!dateTime.isBefore(deadline)) {
                     if (!future.isCancelled()) {
                         try {
                             future.setResult(callable.call());
@@ -130,6 +137,35 @@ public class WarpClock extends Clock {
         listeners.remove(listener);
     }
 
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour,
+            final int minute) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute));
+    }
+
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour, final int minute,
+            final int second) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second));
+    }
+
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour, final int minute,
+            final int second, final int nanoOfSecond) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
+    }
+
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute));
+    }
+
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute,
+            final int second) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second));
+    }
+
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute,
+            final int second, final int nanoOfSecond) {
+        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
+    }
+
     public LocalDateTime plus(final TemporalAmount amountToAdd) {
         return fireUpdate(dateTime.plus(amountToAdd));
     }
@@ -174,31 +210,71 @@ public class WarpClock extends Clock {
         return fireUpdate(dateTime.plusNanos(nanos));
     }
 
+    public LocalDateTime plus(final int amount, final TimeUnit unit, final long endSleep) {
+        return plus(amount, unit, 0, null, 0, endSleep);
+    }
+
+    public LocalDateTime plus(final int amount, final TimeUnit unit, final int byAmount, final TimeUnit byUnit,
+            final long eachSleep, final long endSleep) {
+        long remainder = unit.toNanos(amount);
+        final long each = (byUnit == null ? unit : byUnit).toNanos(byAmount == 0 ? amount : byAmount);
+
+        LocalDateTime result = null;
+        try {
+            if (remainder <= 0) {
+                result = plusNanos(0);
+                Thread.sleep(eachSleep);
+            } else {
+                while (remainder > 0) {
+                    long nanos = each;
+                    if (each > remainder)
+                        nanos = remainder;
+                    result = plusNanos(nanos);
+                    remainder -= nanos;
+                    Thread.sleep(eachSleep);
+                }
+            }
+
+            Thread.sleep(endSleep);
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
     private LocalDateTime fireUpdate(final LocalDateTime newDateTime) {
         dateTime = newDateTime;
-        final Instant instant = instant();
         for (final ClockListener l : listeners) {
-            l.clockUpdate(instant);
+            l.clockUpdate(newDateTime);
         }
+        return dateTime;
+    }
+
+    public int get(final TemporalField field) {
+        return dateTime.get(field);
+    }
+
+    public long getLong(final TemporalField field) {
+        return dateTime.getLong(field);
+    }
+
+    public LocalDateTime getDateTime() {
         return dateTime;
     }
 
     @Override
     public ZoneId getZone() {
-        return offset;
+        return zoneId;
     }
 
     @Override
     public Clock withZone(final ZoneId zone) {
-        final ZoneId normalized = zone.normalized();
-        if (!(normalized instanceof ZoneOffset))
-            throw new RuntimeException("Cannot normalize " + zone + " to a ZoneOffset");
-        this.offset = (ZoneOffset) normalized;
-        return this;
+        return new WarpClock(zoneId, dateTime);
     }
 
     @Override
     public Instant instant() {
-        return dateTime.toInstant(offset);
+        return dateTime.atZone(zoneId).toInstant();
     }
 }
