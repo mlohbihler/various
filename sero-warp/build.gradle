@@ -1,25 +1,42 @@
 apply plugin: 'java'
 apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
 
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+group = 'lohbihler'
 version = '1.0.0'
 
 repositories {
     jcenter()
-    flatDir { dirs 'lib' }
+    mavenLocal()
 }
 
 dependencies {
-    compile ':sero-scheduler:1.+'
-    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'lohbihler:sero-scheduler:1.+'
+    compile 'org.slf4j:slf4j-api:1.7.+'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.slf4j:slf4j-simple:+'
 }
 
-task sourcesJar(group: 'build', type: Jar, dependsOn: classes) {
+task sourceJar(group: 'build', type: Jar, dependsOn: classes) {
     classifier = 'sources'
-    from sourceSets.main.allSource
+    from sourceSets.main.allJava
 }
 
 task jacoco(group: 'verification', dependsOn: jacocoTestReport) {
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
 }
