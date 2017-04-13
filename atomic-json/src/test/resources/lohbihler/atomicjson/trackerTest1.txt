@@ -1,0 +1,12 @@
+/*
+  This is a block comment at the 
+  beginning of a JSON document.
+  Yeah, seriously.
+*/
+{
+  "key1": "value1", // This is a line terminating comment. Yeah, this is supported too.
+  /*
+    Block comments can go in 
+    the middle of a document too. 
+  "key2": "value2", // Oops, forgot to close the quote
+}

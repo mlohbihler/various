@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+group = 'lohbihler'
+version = '1.0.1'
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+task sourceJar(group: 'build', type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task jacoco(group: 'verification', dependsOn: jacocoTestReport) {
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+}
