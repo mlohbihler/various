@@ -14,11 +14,11 @@ repositories {
 }
 
 dependencies {
-    compile 'lohbihler:sero-scheduler:1.+'
-    compile 'org.slf4j:slf4j-api:1.7.+'
+    compile 'lohbihler:sero-scheduler:[1.0.0,2)'
+    compile 'org.slf4j:slf4j-api:[1.7.0,1.8)'
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.slf4j:slf4j-simple:+'
+    testCompile 'org.slf4j:slf4j-simple:[1.7.0,1.8)'
 }
 
 task sourceJar(group: 'build', type: Jar, dependsOn: classes) {
