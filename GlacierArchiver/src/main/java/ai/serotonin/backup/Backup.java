@@ -36,13 +36,13 @@ import com.amazonaws.services.glacier.transfer.UploadResult;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Backup extends Base {
-    static final Log log = LogFactory.getLog(Backup.class);
+    private static final Log LOG = LogFactory.getLog(Backup.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(final String[] args) throws Exception {
         new Backup(args).execute();
     }
 
-    public Backup(String[] args) throws Exception {
+    public Backup(final String[] args) throws Exception {
         super(args);
     }
 
@@ -56,7 +56,7 @@ public class Backup extends Base {
         //sendEmail("Backup successful", "" + backupFile.length() + " bytes uploaded");
         backupFile.delete();
         deleteOldBackups();
-        log.info("Backup process completed");
+        LOG.info("Backup process completed");
     }
 
     private File generateBackupFilename() {
@@ -65,11 +65,11 @@ public class Backup extends Base {
         return new File("./" + prefix + "-" + ts + ".zip");
     }
 
-    private void createBackup(File filename) throws Exception {
-        log.info("Creating backup file " + filename);
-        final FileOutputStream out = new FileOutputStream(filename);
-        final ZipOutputStream zip = new ZipOutputStream(out);
-        try {
+    private void createBackup(final File filename) throws Exception {
+        LOG.info("Creating backup file " + filename);
+
+        try (final FileOutputStream out = new FileOutputStream(filename);
+                final ZipOutputStream zip = new ZipOutputStream(out)) {
             final JsonNode files = configRoot.get("files");
             for (final JsonNode filesNode : files) {
                 final String prefix = filesNode.get("prefix").asText();
@@ -78,14 +78,11 @@ public class Backup extends Base {
                     addFile(zip, prefix, path.asText());
             }
         }
-        finally {
-            IOUtils.closeQuietly(zip);
-            IOUtils.closeQuietly(out);
-        }
-        log.info("Created backup file " + filename + ", " + FileUtils.byteCountToDisplaySize(filename.length()));
+
+        LOG.info("Created backup file " + filename + ", " + FileUtils.byteCountToDisplaySize(filename.length()));
     }
 
-    private void addFile(ZipOutputStream zip, String prefix, String path) throws IOException {
+    private void addFile(final ZipOutputStream zip, final String prefix, final String path) throws IOException {
         final File file = new File(prefix, path);
         if (file.isFile())
             addZipEntry(zip, prefix, path);
@@ -98,25 +95,21 @@ public class Backup extends Base {
         }
     }
 
-    private void addZipEntry(ZipOutputStream zip, String prefix, String path) throws IOException {
+    private static void addZipEntry(final ZipOutputStream zip, final String prefix, final String path)
+            throws IOException {
         final ZipEntry e = new ZipEntry(path);
         zip.putNextEntry(e);
 
-        FileInputStream in = null;
-        try {
-            in = new FileInputStream(new File(prefix, path));
+        try (FileInputStream in = new FileInputStream(new File(prefix, path))) {
             final long len = IOUtils.copy(in, zip);
-            if (log.isDebugEnabled())
-                log.debug("Wrote " + path + ", " + len + " bytes ");
-        }
-        finally {
-            IOUtils.closeQuietly(in);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Wrote " + path + ", " + len + " bytes ");
         }
 
         zip.closeEntry();
     }
 
-    private File encryptFile(File file) throws Exception {
+    private File encryptFile(final File file) throws Exception {
         final SecureRandom random = new SecureRandom();
         final byte[] salt = random.generateSeed(8);
         final String saltStr = Hex.encodeHexString(salt);
@@ -135,16 +128,16 @@ public class Backup extends Base {
 
         file.delete();
 
-        log.info("Encrypted backup file to " + encryptedFile.getPath() + ", "
+        LOG.info("Encrypted backup file to " + encryptedFile.getPath() + ", "
                 + FileUtils.byteCountToDisplaySize(encryptedFile.length()));
         return encryptedFile;
     }
 
-    private void copyToGlacier(File file) throws Exception {
+    private void copyToGlacier(final File file) throws Exception {
         final String vaultName = getVaultName();
         final ArchiveTransferManager atm = new ArchiveTransferManager(client, credentials);
         final UploadResult result = atm.upload(vaultName, file.getName(), file);
-        log.info("Upload archive ID: " + result.getArchiveId());
+        LOG.info("Upload archive ID: " + result.getArchiveId());
     }
 
     private void deleteOldBackups() throws Exception {
@@ -156,14 +149,14 @@ public class Backup extends Base {
         final List<Archive> archives = getInventory();
 
         if (archives == null)
-            log.warn("Could not delete old backups");
+            LOG.warn("Could not delete old backups");
         else {
             Collections.sort(archives);
-            log.info("Found " + archives.size() + " archives in inventory");
+            LOG.info("Found " + archives.size() + " archives in inventory");
 
             while (archives.size() > maxFiles) {
                 final Archive archive = archives.remove(0);
-                log.info("Purging archive named " + archive.filename);
+                LOG.info("Purging archive named " + archive.filename);
                 final DeleteArchiveRequest request = new DeleteArchiveRequest() //
                         .withVaultName(vaultName) //
                         .withArchiveId(archive.id);
@@ -176,7 +169,7 @@ public class Backup extends Base {
                     sb.append(", ");
                 sb.append(archive.filename);
             }
-            log.info("Keeping archive(s) named " + sb.toString());
+            LOG.info("Keeping archive(s) named " + sb.toString());
         }
     }
 }

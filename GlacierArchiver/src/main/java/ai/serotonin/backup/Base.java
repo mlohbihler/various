@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (c) 2015, Matthew Lohbihler
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -31,7 +31,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -55,7 +54,7 @@ import com.serotonin.io.MulticastOutputStream;
 import com.serotonin.web.mail.EmailSender;
 
 abstract public class Base {
-    static final Log log = LogFactory.getLog(Backup.class);
+    private static final Log LOG = LogFactory.getLog(Backup.class);
 
     /**
      * Used to store in memory the messages that are being written to the log. Allows the log messages to be written
@@ -69,7 +68,7 @@ abstract public class Base {
     AWSCredentials credentials;
     AmazonGlacierClient client;
 
-    Base(String[] args) throws Exception {
+    Base(final String[] args) throws Exception {
         if (args.length > 0)
             suffix = args[0];
         else
@@ -82,23 +81,21 @@ abstract public class Base {
     }
 
     void execute() {
-        File processLock = new File(".lock" + suffix);
+        final File processLock = new File(".lock" + suffix);
         if (processLock.exists()) {
             sendEmail("Backup/restore failure!", "Another process is already running. Aborting new run.");
             return;
         }
 
-        MulticastOutputStream mos = null;
         String emailSubject = null;
-        try {
+        try (MulticastOutputStream mos = new MulticastOutputStream();
+                final FileOutputStream logOut = new FileOutputStream("log" + suffix + ".txt", true);
+                final PrintStream out = new PrintStream(mos)) {
             lock(processLock);
 
             // Redirect output to file and memory log.
             memoryLog = new ByteArrayOutputStream();
 
-            FileOutputStream logOut = new FileOutputStream("log" + suffix + ".txt", true);
-
-            mos = new MulticastOutputStream();
             //            mos.setExceptionHandler(new IOExceptionHandler() {
             //                @Override
             //                public void ioException(OutputStream stream, IOException e) {
@@ -108,28 +105,23 @@ abstract public class Base {
             mos.addStream(logOut);
             mos.addStream(memoryLog);
 
-            PrintStream out = new PrintStream(mos);
-
             System.setOut(out);
             System.setErr(out);
 
             executeImpl();
             emailSubject = "Backup/restore completion";
-        }
-        catch (Exception e) {
-            log.error("An error occurred", e);
+        } catch (final Exception e) {
+            LOG.error("An error occurred", e);
 
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
+            final StringWriter sw = new StringWriter();
+            final PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
+            // TODO sw isn't used?
             emailSubject = "Backup/restore failure!";
-        }
-        finally {
+        } finally {
             // Send the result email
-            String content = new String(memoryLog.toByteArray());
+            final String content = new String(memoryLog.toByteArray());
             sendEmail(emailSubject, content);
-
-            IOUtils.closeQuietly(mos);
 
             unlock(processLock);
         }
@@ -138,20 +130,17 @@ abstract public class Base {
     abstract void executeImpl() throws Exception;
 
     private void loadConfig() throws Exception {
-        String name = "/config" + suffix + ".json";
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            InputStream in = Backup.class.getResourceAsStream(name);
+        final String name = "/config" + suffix + ".json";
+        try (final InputStream in = Backup.class.getResourceAsStream(name)) {
+            final ObjectMapper mapper = new ObjectMapper();
             configRoot = mapper.readValue(in, ObjectNode.class);
-            in.close();
-        }
-        catch (Exception e) {
+        } catch (final Exception e) {
             throw new Exception("Failed to load " + name, e);
         }
     }
 
     private void createSmtpClient() {
-        JsonNode smtp = configRoot.get("smtp");
+        final JsonNode smtp = configRoot.get("smtp");
         emailSender = new EmailSender( //
                 smtp.get("host").asText(), //
                 smtp.get("port").asInt(), //
@@ -163,16 +152,16 @@ abstract public class Base {
     }
 
     private void createGlacierClient() {
-        String accessKey = configRoot.get("glacier").get("accessKey").asText();
-        String secretKey = configRoot.get("glacier").get("secretKey").asText();
-        String endpoint = configRoot.get("glacier").get("endpoint").asText();
+        final String accessKey = configRoot.get("glacier").get("accessKey").asText();
+        final String secretKey = configRoot.get("glacier").get("secretKey").asText();
+        final String endpoint = configRoot.get("glacier").get("endpoint").asText();
         credentials = new BasicAWSCredentials(accessKey, secretKey);
         client = new AmazonGlacierClient(credentials) //
                 .withEndpoint(endpoint);
     }
 
-    private void sendEmail(String subject, String content) {
-        String prefix = configRoot.get("prefix").asText();
+    private void sendEmail(final String subject, final String content) {
+        final String prefix = configRoot.get("prefix").asText();
 
         emailSender.send( //
                 configRoot.get("smtp").get("from").asText(), //
@@ -180,23 +169,23 @@ abstract public class Base {
                 subject + " (" + prefix + ")", //
                 content, //
                 (String) null);
-        log.info("Sent job completion email");
+        LOG.info("Sent job completion email");
     }
 
-    private void lock(File lockFile) throws IOException {
-        FileWriter fw = new FileWriter(lockFile);
-        fw.write("Running...");
-        fw.close();
+    private static void lock(final File lockFile) throws IOException {
+        try (final FileWriter fw = new FileWriter(lockFile)) {
+            fw.write("Running...");
+        }
     }
 
-    private void unlock(File lockFile) {
+    private static void unlock(final File lockFile) {
         lockFile.delete();
     }
 
     List<Archive> getInventory() throws Exception {
-        String vaultName = getVaultName();
+        final String vaultName = getVaultName();
 
-        InitiateJobRequest initJobRequest = new InitiateJobRequest() //
+        final InitiateJobRequest initJobRequest = new InitiateJobRequest() //
                 .withVaultName(vaultName) //
                 .withJobParameters(new JobParameters() //
                         .withType("inventory-retrieval") //
@@ -205,13 +194,12 @@ abstract public class Base {
 
         String jobId;
         try {
-            log.info("Initiating inventory job...");
-            InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
+            LOG.info("Initiating inventory job...");
+            final InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
             jobId = initJobResult.getJobId();
-        }
-        catch (ResourceNotFoundException e) {
+        } catch (final ResourceNotFoundException e) {
             // Ignore. No inventory is available.
-            log.warn("Inventory not available: " + e.getErrorMessage());
+            LOG.warn("Inventory not available: " + e.getErrorMessage());
             return null;
         }
 
@@ -219,15 +207,16 @@ abstract public class Base {
         waitForJob(vaultName, jobId);
 
         // Get the output of the inventory job.
-        log.info("Inventory job completed. Getting output...");
-        GetJobOutputRequest jobOutputRequest = new GetJobOutputRequest().withVaultName(vaultName).withJobId(jobId);
-        GetJobOutputResult jobOutputResult = client.getJobOutput(jobOutputRequest);
+        LOG.info("Inventory job completed. Getting output...");
+        final GetJobOutputRequest jobOutputRequest = new GetJobOutputRequest().withVaultName(vaultName)
+                .withJobId(jobId);
+        final GetJobOutputResult jobOutputResult = client.getJobOutput(jobOutputRequest);
 
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode rootNode = mapper.readValue(jobOutputResult.getBody(), ObjectNode.class);
+        final ObjectMapper mapper = new ObjectMapper();
+        final ObjectNode rootNode = mapper.readValue(jobOutputResult.getBody(), ObjectNode.class);
 
-        List<Archive> archives = new ArrayList<>();
-        for (JsonNode archiveNode : rootNode.get("ArchiveList"))
+        final List<Archive> archives = new ArrayList<>();
+        for (final JsonNode archiveNode : rootNode.get("ArchiveList"))
             archives.add(new Archive(archiveNode));
         Collections.sort(archives);
 
@@ -242,20 +231,20 @@ abstract public class Base {
         if (!configRoot.has("password"))
             return null;
 
-        String password = configRoot.get("password").asText();
+        final String password = configRoot.get("password").asText();
         if (StringUtils.isNullOrEmpty(password))
             return null;
 
         return password;
     }
 
-    void waitForJob(String vaultName, String jobId) throws Exception {
+    void waitForJob(final String vaultName, final String jobId) throws Exception {
         while (true) {
-            DescribeJobResult describeJobResult = client.describeJob(new DescribeJobRequest(vaultName, jobId));
-            Boolean completed = describeJobResult.getCompleted();
+            final DescribeJobResult describeJobResult = client.describeJob(new DescribeJobRequest(vaultName, jobId));
+            final Boolean completed = describeJobResult.getCompleted();
             if (completed != null && completed)
                 break;
-            log.info("Job not completed. Waiting 15 minutes...");
+            LOG.info("Job not completed. Waiting 15 minutes...");
             Thread.sleep(1000 * 60 * 15);
         }
     }
@@ -264,22 +253,20 @@ abstract public class Base {
         return Cipher.getInstance("AES/CBC/PKCS5Padding");
     }
 
-    SecretKey createSecretKey(byte[] salt) throws Exception {
-        String password = getArchivePassword();
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
-        SecretKey tmp = factory.generateSecret(spec);
-        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+    SecretKey createSecretKey(final byte[] salt) throws Exception {
+        final String password = getArchivePassword();
+        final SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        final KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
+        final SecretKey tmp = factory.generateSecret(spec);
+        final SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
         return secret;
     }
 
-    void cipherizeFile(File inFile, File outFile, Cipher cipher) throws Exception {
-        FileInputStream fis = new FileInputStream(inFile);
-        FileOutputStream fos = new FileOutputStream(outFile);
-
-        try {
-            byte[] inbuf = new byte[1028];
-            byte[] outbuf = new byte[2056];
+    void cipherizeFile(final File inFile, final File outFile, final Cipher cipher) throws Exception {
+        try (final FileInputStream fis = new FileInputStream(inFile);
+                final FileOutputStream fos = new FileOutputStream(outFile)) {
+            final byte[] inbuf = new byte[1028];
+            final byte[] outbuf = new byte[2056];
             int readCount, encCount;
             while ((readCount = fis.read(inbuf)) != -1) {
                 encCount = cipher.update(inbuf, 0, readCount, outbuf);
@@ -288,10 +275,6 @@ abstract public class Base {
 
             encCount = cipher.doFinal(inbuf, 0, 0, outbuf);
             fos.write(outbuf, 0, encCount);
-        }
-        finally {
-            IOUtils.closeQuietly(fis);
-            IOUtils.closeQuietly(fos);
         }
     }
 
@@ -302,7 +285,7 @@ abstract public class Base {
         long size;
         String hash;
 
-        public Archive(JsonNode json) throws ParseException {
+        public Archive(final JsonNode json) throws ParseException {
             id = json.get("ArchiveId").asText();
             filename = json.get("ArchiveDescription").asText();
             creation = ISO8601Utils.parse(json.get("CreationDate").asText(), new ParsePosition(0));
@@ -311,7 +294,7 @@ abstract public class Base {
         }
 
         @Override
-        public int compareTo(Archive that) {
+        public int compareTo(final Archive that) {
             return creation.compareTo(that.creation);
         }
     }
