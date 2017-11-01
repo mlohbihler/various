@@ -10,6 +10,7 @@ package lohbihler.atomicjson;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -84,6 +85,31 @@ public class JList extends ArrayList<Object> {
     public JList jadd(final Object value) {
         add(value);
         return this;
+    }
+
+    /**
+     * @param clazz 
+     */
+    public <E> Iterable<E> iterable(final Class<E> clazz) {
+        return new Iterable<E>() {
+            @Override
+            public Iterator<E> iterator() {
+                return new Iterator<E>() {
+                    Iterator<Object> iter = JList.this.iterator();
+
+                    @Override
+                    public boolean hasNext() {
+                        return iter.hasNext();
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public E next() {
+                        return (E) iter.next();
+                    }
+                };
+            }
+        };
     }
 
     @Override
