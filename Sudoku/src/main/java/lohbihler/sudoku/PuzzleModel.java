@@ -37,6 +37,11 @@ public abstract class PuzzleModel<T extends PuzzleModel<?>> {
         return getBoxSize() * getBoxSize();
     }
 
+    public void set(final PuzzleModel<?> that) {
+        possibleCellValues = that.possibleCellValues;
+        changed = that.changed;
+    }
+
     public boolean hasChanged() {
         return changed;
     }
@@ -93,14 +98,21 @@ public abstract class PuzzleModel<T extends PuzzleModel<?>> {
         }
     }
 
+    public boolean isEmpty(final int x, final int y) {
+        return possibleCellValues[x][y].size() == 0;
+    }
+
     public boolean isSolved() {
         return !XYStreams.toStream(possibleCellValues).anyMatch(pcv -> !pcv.isSolved());
     }
 
-    public void dump() {
+    @Override
+    public String toString() {
         final int maxSize = XYStreams.toStream(possibleCellValues) //
                 .max((pcv1, pcv2) -> pcv1.size() - pcv2.size()) //
                 .get().size();
+
+        final StringBuilder sb = new StringBuilder();
 
         Arrays.stream(possibleCellValues) //
                 .forEach(arr -> {
@@ -109,18 +121,22 @@ public abstract class PuzzleModel<T extends PuzzleModel<?>> {
                                 int counter = maxSize;
                                 // Write out the remaining values
                                 for (int i = 0; i < pcv.size(); i++) {
-                                    System.out.print(pcv.get(i));
+                                    sb.append(pcv.get(i));
                                     counter--;
                                 }
                                 // Fill in with spaces.
                                 while (counter > 0) {
-                                    System.out.print(' ');
+                                    sb.append(' ');
                                     counter--;
                                 }
-                                System.out.print(" | ");
+                                sb.append(" | ");
                             });
-                    System.out.println();
+                    sb.append("\r\n");
                 });
-        System.out.println();
+        return sb.toString();
+    }
+
+    public void dump() {
+        System.out.println(toString());
     }
 }

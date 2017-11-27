@@ -1,7 +1,5 @@
 package lohbihler.sudoku;
 
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -258,29 +256,6 @@ public class SudokuTest {
                         { '7', '9', '2', '8', '3', '6', '5', '1', '4', }, //
                         { '1', '3', '4', '7', '9', '5', '2', '6', '8', }, //
                 });
-    }
-
-    @Test
-    public void custom2() {
-        try {
-            test(new Puzzle9x9(),
-                    new char[][] { //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', '?', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', '?', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
-                    });
-            fail("Should have throws RTE");
-        } catch (final RuntimeException e) {
-            Assert.assertEquals(
-                    "Attempt to set cell to a value that has already been eliminated: cell:[1, 2, 3, 4, 5, 6, 7, 8, 9], value=?",
-                    e.getMessage());
-        }
     }
 
     @Test
@@ -599,28 +574,77 @@ public class SudokuTest {
 
         assertEquals(model,
                 new char[][] { //
-                        { '9', '3', '1', '4', '5', '8', '2', '6', '7', }, //
-                        { '2', '7', '4', '6', '3', '9', '1', '5', '8', }, //
-                        { '6', '8', '5', '7', '1', '2', '3', '4', '9', }, //
-                        { '5', '4', '8', '3', '6', '1', '7', '9', '2', }, //
-                        { '1', '2', '3', '9', '4', '7', '5', '8', '6', }, //
-                        { '7', '9', '6', '8', '2', '5', '4', '1', '3', }, //
-                        { '3', '6', '2', '5', '9', '4', '8', '7', '1', }, //
-                        { '4', '1', '7', '2', '8', '6', '9', '3', '5', }, //
-                        { '8', '5', '9', '1', '7', '3', '6', '2', '4', }, //
+                        { '8', '1', '2', '7', '5', '3', '6', '4', '9', }, //
+                        { '9', '4', '3', '6', '8', '2', '1', '7', '5', }, //
+                        { '6', '7', '5', '4', '9', '1', '2', '8', '3', }, //
+                        { '1', '5', '4', '2', '3', '7', '8', '9', '6', }, //
+                        { '3', '6', '9', '8', '4', '5', '7', '2', '1', }, //
+                        { '2', '8', '7', '1', '6', '9', '5', '3', '4', }, //
+                        { '5', '2', '1', '9', '7', '4', '3', '6', '8', }, //
+                        { '4', '3', '8', '5', '2', '6', '9', '1', '7', }, //
+                        { '7', '9', '6', '3', '1', '8', '4', '5', '2', }, //
                 });
+    }
+
+    @Test
+    public void empty() {
+        final Puzzle9x9 model = test(new Puzzle9x9(),
+                new char[][] { //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                        { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                });
+
+        assertEquals(model,
+                new char[][] { //
+                        { '1', '4', '7', '2', '3', '8', '5', '6', '9', }, //
+                        { '2', '5', '8', '1', '6', '9', '3', '4', '7', }, //
+                        { '3', '6', '9', '4', '5', '7', '1', '2', '8', }, //
+                        { '4', '7', '1', '3', '8', '2', '6', '9', '5', }, //
+                        { '5', '8', '2', '6', '9', '1', '4', '7', '3', }, //
+                        { '6', '9', '3', '5', '7', '4', '2', '8', '1', }, //
+                        { '7', '1', '4', '8', '2', '3', '9', '5', '6', }, //
+                        { '8', '2', '5', '9', '1', '6', '7', '3', '4', }, //
+                        { '9', '3', '6', '7', '4', '5', '8', '1', '2', }, //
+                });
+    }
+
+    @Test
+    public void bad() {
+        try {
+            test(new Puzzle9x9(),
+                    new char[][] { //
+                            { '1', '1', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                            { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }, //
+                    });
+        } catch (final RuntimeException e) {
+            Assert.assertEquals("Duplicate column value at x=0, y=1", e.getMessage());
+        }
     }
 
     private static <T extends PuzzleModel<?>> T test(final T model, final char[][] data) {
         final long startTime = System.currentTimeMillis();
 
         model.init();
-        for (int y = 0; y < data.length; y++) {
-            for (int x = 0; x < data[0].length; x++) {
-                if (data[y][x] == '-')
-                    data[y][x] = ' ';
-                if (data[y][x] != ' ')
-                    model.setValue(x, y, data[y][x]);
+        for (int x = 0; x < data.length; x++) {
+            for (int y = 0; y < data[0].length; y++) {
+                if (data[x][y] == '-')
+                    data[x][y] = ' ';
+                if (data[x][y] != ' ')
+                    model.setValue(x, y, data[x][y]);
             }
         }
 
@@ -634,21 +658,21 @@ public class SudokuTest {
             validators.get(i).validate(model);
         }
 
-        final String time = Long.toString((System.currentTimeMillis() - startTime) / 1000);
+        final String time = Long.toString(System.currentTimeMillis() - startTime);
         model.dump();
         if (model.isSolved())
-            System.out.println("Puzzle was solved in " + time + " s");
+            System.out.println("Puzzle was solved in " + time + " ms");
         else
-            System.out.println("Puzzle was not solved in " + time + " s");
+            System.out.println("Puzzle was not solved in " + time + " ms");
 
         return model;
     }
 
     private static void assertEquals(final PuzzleModel<?> model, final char[][] solution) {
-        for (int y = 0; y < solution.length; y++) {
-            for (int x = 0; x < solution[0].length; x++) {
-                if (solution[y][x] != model.getSolvedValue(x, y).charValue()) {
-                    throw new AssertionError("Expected " + solution[y][x] + " but found "
+        for (int x = 0; x < solution[0].length; x++) {
+            for (int y = 0; y < solution.length; y++) {
+                if (solution[x][y] != model.getSolvedValue(x, y).charValue()) {
+                    throw new AssertionError("Expected " + solution[x][y] + " but found "
                             + model.getSolvedValue(x, y).charValue() + " at " + x + "," + y);
                 }
             }

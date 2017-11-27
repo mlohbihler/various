@@ -64,4 +64,11 @@ public class PossibleCellValues {
     public boolean contains(final Character c) {
         return remaining.contains(c);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        remaining.forEach(c -> sb.append(c));
+        return sb.toString();
+    }
 }

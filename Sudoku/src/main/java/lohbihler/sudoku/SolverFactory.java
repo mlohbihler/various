@@ -4,22 +4,20 @@ package lohbihler.sudoku;
  * @author mlohbihler
  */
 public class SolverFactory {
-    public static Solver[] firstLevelSolvers() {
-        return new Solver[] { new BoxEliminator(), new HorizontalEliminator(), new VerticalEliminator(),
-                new BoxSingleValueSeeker(), new HorizontalSingleValueSeeker(), new VerticalSingleValueSeeker(), };
-    }
+    private static Solver[] firstLevelSolvers = { new BoxEliminator(), new HorizontalEliminator(),
+            new VerticalEliminator(), new BoxSingleValueSeeker(), new HorizontalSingleValueSeeker(),
+            new VerticalSingleValueSeeker(), };
 
-    public static Solver[] secondLevelSolvers() {
-        return new Solver[] { new PotentialValueElimination(), };
-    }
+    private static Solver[] secondLevelSolvers = { new PotentialValueElimination(), };
+
+    private static Validator[] validators = { new HorizontalValidator(), new VerticalValidator(), new BoxValidator(), };
 
     public static boolean solveFirstLevel(final PuzzleModel<?> model) {
         boolean changed = false;
         model.reset();
-        final Solver[] solvers = firstLevelSolvers();
         while (true) {
-            for (int i = 0; i < solvers.length; i++)
-                solvers[i].process(model);
+            for (int i = 0; i < firstLevelSolvers.length; i++)
+                firstLevelSolvers[i].process(model);
             if (!model.hasChanged())
                 break;
             changed = true;
@@ -31,10 +29,9 @@ public class SolverFactory {
     public static boolean solveSecondLevel(final PuzzleModel<?> model) {
         boolean changed = false;
         model.reset();
-        final Solver[] solvers = secondLevelSolvers();
         while (true) {
-            for (int i = 0; i < solvers.length; i++)
-                solvers[i].process(model);
+            for (int i = 0; i < secondLevelSolvers.length; i++)
+                secondLevelSolvers[i].process(model);
             if (!model.hasChanged())
                 break;
             changed = true;
@@ -44,6 +41,16 @@ public class SolverFactory {
     }
 
     public static void solve(final PuzzleModel<?> model) {
+        // First validate the model.
+        for (int i = 0; i < validators.length; i++) {
+            validators[i].validate(model);
+        }
+
+        // Then try to solve it.
+        solveValidated(model);
+    }
+
+    static void solveValidated(final PuzzleModel<?> model) {
         boolean changed = false;
         while (true) {
             System.out.println("First level...");

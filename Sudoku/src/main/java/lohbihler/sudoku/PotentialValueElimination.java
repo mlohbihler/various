@@ -20,25 +20,41 @@ public class PotentialValueElimination implements Solver {
         PuzzleModel<?> modelClone;
 
         // Iterate through the cells looking for those with multiple potential values.
-        for (int y = 0; y < model.getSize(); y++) {
-            for (int x = 0; x < model.getSize(); x++) {
-                if (!model.isSolved(x, y)) {
-                    final PossibleCellValues pcv = model.getCell(x, y).copy();
+        try {
+            for (int y = 0; y < model.getSize(); y++) {
+                for (int x = 0; x < model.getSize(); x++) {
+                    if (!model.isSolved(x, y)) {
+                        final PossibleCellValues pcv = model.getCell(x, y).copy();
 
-                    // Test the values in the clone.
-                    for (int i = 0; i < pcv.size(); i++) {
-                        modelClone = model.copy();
-                        modelClone.setValue(x, y, pcv.get(i));
+                        // Test the values in the clone.
+                        for (int i = 0; i < pcv.size(); i++) {
+                            modelClone = model.copy();
+                            modelClone.setValue(x, y, pcv.get(i));
 
-                        try {
-                            SolverFactory.solveFirstLevel(modelClone);
-                        } catch (final RuntimeException e) {
-                            // The value didn't work, so remove it as a potential value.
-                            model.removeValue(x, y, pcv.get(i));
+                            try {
+                                //                            SolverFactory.solveFirstLevel(modelClone);
+                                SolverFactory.solve(modelClone);
+                                if (modelClone.isSolved()) {
+                                    model.set(modelClone);
+                                    throw new SolvedException();
+                                }
+                            } catch (final RuntimeException e) {
+                                // The value didn't work, so remove it as a potential value.
+                                model.removeValue(x, y, pcv.get(i));
+                                if (model.isEmpty(x, y)) {
+                                    throw new RuntimeException("No values remain at " + x + ", " + y);
+                                }
+                            }
                         }
                     }
                 }
             }
+        } catch (final SolvedException e) {
+            // no op
         }
+    }
+
+    static class SolvedException extends Exception {
+        private static final long serialVersionUID = 1L;
     }
 }
