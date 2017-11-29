@@ -1,0 +1,38 @@
+#sudoku {
+  margin-top: 20px;
+}
+
+#sudoku table {
+  margin: 0 auto;
+  border: 4px solid #666;
+  border-collapse: collapse;
+}
+
+#sudoku td {
+  border: 2px solid #666;
+  padding: 0;
+}
+
+#sudoku table table {
+  border: 2px solid #666;
+  margin: 0;
+}
+
+#sudoku td td {
+  padding: 2px 4px;
+}
+
+#sudoku input {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  border: none;
+}
+
+#sudoku .btns {
+  margin-top: 20px;
+}
+
+#sudoku .alert {
+  margin-top: 20px;
+}

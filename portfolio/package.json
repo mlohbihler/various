@@ -1,0 +1,24 @@
+{
+  "name": "portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "4.0.0-beta.2",
+    "holderjs": "^2.9.4",
+    "jquery": "1.9.1",
+    "konva": "^1.7.6",
+    "popper.js": "1.12.3",
+    "react": "^16.1.1",
+    "react-dom": "^16.1.1",
+    "react-konva": "^1.6.4",
+    "react-scripts": "1.0.17",
+    "react-transition-group": "1.1.2",
+    "reactstrap": "^4.8.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
