@@ -222,10 +222,11 @@ export default class App extends React.Component {
                   <p className="card-text">
                     2017 - Are you dying to see how this site was created. I&apos;m not one to keep good people like yourself in suspense.
                     This page is hosted on GitHub at https://mlohbihler.github.io. There are easy-to-follow instructions there about how to
-                    set one up. All of the code is keep here. The only part that I don&apos;t like about how it works is the deployment. Once
-                    I have the code the way I want I run a "yarn build" to create the build directory. Then I copy the contents of that directory
-                    to my GIT workspace for mlohbiher.github.io, and commit and push from there. It would be much nicer to be able to build and
-                    deploy directly from the source repo, but github.io doesn&apos;t want to work that way.
+                    set one up. All of the code is kept <a href="https://github.com/mlohbihler/various/tree/master/portfolio">here</a>. The 
+                    only part that I don&apos;t like about how it works is the deployment. Once I have the code the way I want I run a 
+                    "yarn build" to create the build directory. Then I copy the contents of that directory to my git workspace for 
+                    mlohbiher.github.io, and commit and push from there. It would be much nicer to be able to build and deploy directly from 
+                    the source repo, but github.io doesn&apos;t want to work that way.
                   </p>
                 </div>
 
