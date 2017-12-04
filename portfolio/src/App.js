@@ -216,11 +216,11 @@ export default class App extends React.Component {
                 </div>
 
                 <div className="card">
-                  <a href="https://www.youtube.com/watch?v=K5DcK-ImFxc">
+                  <a href="https://github.com/mlohbihler/various/tree/master/portfolio">
                     <img src={reflection} alt="Reflection" style={{padding: "0px 64px"}}/>
                   </a>
                   <p className="card-text">
-                    2017 - Are you dying to see how this site was created. I&apos;m not one to keep good people like yourself in suspense.
+                    2017 - Are you itching to see how this site was created? I&apos;m not one to keep good people like yourself in suspense.
                     This page is hosted on GitHub at https://mlohbihler.github.io. There are easy-to-follow instructions there about how to
                     set one up. All of the code is kept <a href="https://github.com/mlohbihler/various/tree/master/portfolio">here</a>. The
                     only part that I don&apos;t like about how it works is the deployment. Once I have the code the way I want I run a
