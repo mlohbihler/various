@@ -10,6 +10,7 @@ package lohbihler.atomicjson;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,18 @@ import java.util.Map;
  * @author Matthew Lohbihler
  */
 public class JsonWriter {
+    public static String writeToString(final Object value) {
+        final StringWriter out = new StringWriter();
+        final JsonWriter writer = new JsonWriter(out);
+        try {
+            writer.writeObject(value);
+        } catch (final IOException e) {
+            // This should never happen because we are writing to a StringWriter
+            throw new RuntimeException(e);
+        }
+        return out.toString();
+    }
+
     /**
      * A convenience method for converting an object to JSON. By default this method will write non-optimized,
      * human-readable JSON, with line breaks and an indent of 2 spaces. This method should not be used in production
@@ -31,7 +44,7 @@ public class JsonWriter {
      * @throws JsonException
      * @throws IOException
      */
-    public static String writeToString(final Object value) {
+    public static String writeToPrettyString(final Object value) {
         final StringWriter out = new StringWriter();
         final JsonWriter writer = new JsonWriter(out);
         writer.setPrettyOutput(true);
@@ -174,21 +187,21 @@ public class JsonWriter {
         }
 
         try {
-            if (value instanceof JMap) {
-                final JMap map = (JMap) value;
+            if (value instanceof Map<?, ?>) {
+                final Map<?, ?> map = (Map<?, ?>) value;
 
                 append('{');
                 increaseIndent();
 
                 boolean first = true;
-                for (final Map.Entry<String, Object> e : map.entrySet()) {
+                for (final Map.Entry<?, ?> e : map.entrySet()) {
                     if (first)
                         first = false;
                     else
                         append(',');
 
                     indent();
-                    quote(e.getKey());
+                    quote(e.getKey().toString());
                     append(':');
                     writeObject(e.getValue());
                 }
@@ -196,8 +209,8 @@ public class JsonWriter {
                 decreaseIndent();
                 indent();
                 append('}');
-            } else if (value instanceof JList) {
-                final JList list = (JList) value;
+            } else if (value instanceof List<?>) {
+                final List<?> list = (List<?>) value;
 
                 append('[');
                 increaseIndent();
@@ -215,6 +228,8 @@ public class JsonWriter {
                 append(']');
             } else if (value instanceof String) {
                 quote((String) value);
+            } else if (value instanceof BigDecimal) {
+                append(((BigDecimal) value).toPlainString());
             } else if (value instanceof Number) {
                 append(((Number) value).toString());
             } else if (value instanceof Boolean) {
