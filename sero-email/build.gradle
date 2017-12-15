@@ -1,0 +1,42 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+group = 'lohbihler'
+version = '1.0.0'
+
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    compile 'javax.mail:mail:1.+'
+    compile 'org.springframework:spring-context-support:5.+'
+
+    testCompile 'junit:junit:4.+'
+}
+
+task sourceJar(group: 'build', type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task jacoco(group: 'verification', dependsOn: jacocoTestReport) {
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+}
