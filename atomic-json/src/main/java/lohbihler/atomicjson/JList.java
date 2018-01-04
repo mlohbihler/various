@@ -78,7 +78,7 @@ public class JList extends ArrayList<Object> {
         return jget(index);
     }
 
-    public JList getArray(final int index) {
+    public JList getList(final int index) {
         return jget(index);
     }
 
@@ -88,7 +88,7 @@ public class JList extends ArrayList<Object> {
     }
 
     /**
-     * @param clazz 
+     * @param clazz
      */
     public <E> Iterable<E> iterable(final Class<E> clazz) {
         return new Iterable<E>() {
