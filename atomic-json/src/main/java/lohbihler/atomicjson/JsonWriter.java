@@ -235,8 +235,10 @@ public class JsonWriter {
             } else if (value instanceof Boolean) {
                 append((Boolean) value ? "true" : "false");
             } else {
-                throw new JsonWriteException(
-                        "Don't know how to write object " + value + " of class " + value.getClass());
+                // Convert to string
+                quote(value.toString());
+                //                throw new JsonWriteException(
+                //                        "Don't know how to write object " + value + " of class " + value.getClass());
             }
         } catch (IOException | RuntimeException e) {
             // Let the exception through
