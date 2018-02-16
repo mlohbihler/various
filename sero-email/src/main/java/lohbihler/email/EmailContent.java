@@ -75,4 +75,53 @@ public class EmailContent {
     public String getEncoding() {
         return encoding;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (attachments == null ? 0 : attachments.hashCode());
+        result = prime * result + (encoding == null ? 0 : encoding.hashCode());
+        result = prime * result + (htmlContent == null ? 0 : htmlContent.hashCode());
+        result = prime * result + (inlineParts == null ? 0 : inlineParts.hashCode());
+        result = prime * result + (plainContent == null ? 0 : plainContent.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final EmailContent other = (EmailContent) obj;
+        if (attachments == null) {
+            if (other.attachments != null)
+                return false;
+        } else if (!attachments.equals(other.attachments))
+            return false;
+        if (encoding == null) {
+            if (other.encoding != null)
+                return false;
+        } else if (!encoding.equals(other.encoding))
+            return false;
+        if (htmlContent == null) {
+            if (other.htmlContent != null)
+                return false;
+        } else if (!htmlContent.equals(other.htmlContent))
+            return false;
+        if (inlineParts == null) {
+            if (other.inlineParts != null)
+                return false;
+        } else if (!inlineParts.equals(other.inlineParts))
+            return false;
+        if (plainContent == null) {
+            if (other.plainContent != null)
+                return false;
+        } else if (!plainContent.equals(other.plainContent))
+            return false;
+        return true;
+    }
 }
