@@ -1,3 +1,7 @@
+/*
+    Copyright (C) 2006-2018 Serotonin Software Technologies Inc.
+    @author Matthew Lohbihler
+ */
 package lohbihler.email;
 
 import java.io.UnsupportedEncodingException;

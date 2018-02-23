@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2007 Serotonin Software Technologies Inc.
+    Copyright (C) 2006-2018 Serotonin Software Technologies Inc.
     @author Matthew Lohbihler
  */
 package lohbihler.email;
