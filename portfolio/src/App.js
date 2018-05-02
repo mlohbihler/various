@@ -5,6 +5,7 @@ import Sudoku from './Sudoku.js'
 
 import './App.css'
 
+import arb from './img/arb.png'
 import comingSoon from './img/coming-soon.jpg'
 import dgbox from './img/dgbox.jpg'
 import hackerrank from './img/hackerrank.png'
@@ -102,6 +103,17 @@ export default class App extends React.Component {
             <div className="container">
               <div className="row">
                 <div className="card">
+                  <img src={arb} alt="Crpto arbitrage" style={{padding: "50px 0px"}}/>
+                  <p className="card-text">
+                    2018 - I literally woke up in the middle of the night with this realization; crypto exchanges are arbitrage opportunities. Any exchange
+                    where loops can be created through 3 or more markets would work. And with the thousands of exchanges there are in the world, there might
+                    actually be some money to be made. Well, that turned out to be true, and even better, pretty much every exchange there is offers an API
+                    where this can be automated. Which I did. And no, you can&apos;t have the source code. But I will say that I have 7 EC2 instances running
+                    it, and the software easily pays for them all.
+                  </p>
+                </div>
+
+                <div className="card">
                   <img src={konvaGraphics} alt="Konva graphics" onClick={konvaToggle} className="pointer"/>
                   <p className="card-text">2017 - Interactive canvas graphics built with Konva and ReactKonva</p>
 
@@ -125,6 +137,7 @@ export default class App extends React.Component {
                   <p className="card-text">
                     2017 - I am now part of the team helping to build Mannabase (nee Grantcoin), a blockchain implementation
                     of a worldwide Universal Basic Income. It&apos;s a great idea, a great cause, by great people, and you should sign up. Now. NOW!!!
+                    Contact me to ask more about this great project.
                   </p>
                 </div>
 
