@@ -50,6 +50,9 @@ public class Restore extends Base {
             return;
         }
 
+        LOG.info("Successfully retrieved inventory");
+        archives.forEach(e -> LOG.info("   " + e));
+
         // Retrieve the latest file
         final Archive latest = archives.get(archives.size() - 1);
         File file = retrieveArchive(latest.id, latest.filename);
@@ -70,9 +73,9 @@ public class Restore extends Base {
                 .withJobParameters(new JobParameters() //
                         .withType("archive-retrieval") //
                         .withArchiveId(id) //
-        //.withSNSTopic("*** provide SNS topic ARN ****") //
-        //.withDescription("archive retrieval")
-        );
+                //.withSNSTopic("*** provide SNS topic ARN ****") //
+                //.withDescription("archive retrieval")
+                );
 
         LOG.info("Initiating archive retrieval job...");
         final InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
