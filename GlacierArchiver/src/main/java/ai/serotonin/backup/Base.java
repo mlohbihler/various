@@ -35,8 +35,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.glacier.AmazonGlacierClient;
+import com.amazonaws.services.glacier.AmazonGlacierClientBuilder;
 import com.amazonaws.services.glacier.model.DescribeJobRequest;
 import com.amazonaws.services.glacier.model.DescribeJobResult;
 import com.amazonaws.services.glacier.model.GetJobOutputRequest;
@@ -45,6 +47,10 @@ import com.amazonaws.services.glacier.model.InitiateJobRequest;
 import com.amazonaws.services.glacier.model.InitiateJobResult;
 import com.amazonaws.services.glacier.model.JobParameters;
 import com.amazonaws.services.glacier.model.ResourceNotFoundException;
+import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.util.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,7 +72,9 @@ abstract public class Base {
     ObjectNode configRoot;
     EmailSender emailSender;
     AWSCredentials credentials;
-    AmazonGlacierClient client;
+    AmazonGlacierClient glacierClient;
+    AmazonSQSClient sqsClient;
+    AmazonSNSClient snsClient;
 
     Base(final String[] args) throws Exception {
         if (args.length > 0)
@@ -105,19 +113,24 @@ abstract public class Base {
             mos.addStream(logOut);
             mos.addStream(memoryLog);
 
-            System.setOut(out);
-            System.setErr(out);
+            try {
+                System.setOut(out);
+                System.setErr(out);
 
-            executeImpl();
-            emailSubject = "Backup/restore completion";
+                executeImpl();
+                emailSubject = "Backup/restore completion";
+            } catch (final Throwable e) {
+                LOG.error("An error occurred", e);
+
+                final StringWriter sw = new StringWriter();
+                final PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+
+                // TODO sw isn't used?
+                emailSubject = "Backup/restore failure!";
+            }
         } catch (final Exception e) {
             LOG.error("An error occurred", e);
-
-            final StringWriter sw = new StringWriter();
-            final PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            // TODO sw isn't used?
-            emailSubject = "Backup/restore failure!";
         } finally {
             // Send the result email
             final String content = new String(memoryLog.toByteArray());
@@ -154,10 +167,15 @@ abstract public class Base {
     private void createGlacierClient() {
         final String accessKey = configRoot.get("glacier").get("accessKey").asText();
         final String secretKey = configRoot.get("glacier").get("secretKey").asText();
-        final String endpoint = configRoot.get("glacier").get("endpoint").asText();
+        final String region = configRoot.get("glacier").get("region").asText();
         credentials = new BasicAWSCredentials(accessKey, secretKey);
-        client = new AmazonGlacierClient(credentials) //
-                .withEndpoint(endpoint);
+        glacierClient = (AmazonGlacierClient) AmazonGlacierClientBuilder.standard() //
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)) //
+                .withRegion(region) //
+                .build();
+
+        sqsClient = (AmazonSQSClient) AmazonSQSClientBuilder.standard().withRegion(region).build();
+        snsClient = (AmazonSNSClient) AmazonSNSClientBuilder.standard().withRegion(region).build();
     }
 
     private void sendEmail(final String subject, final String content) {
@@ -189,13 +207,13 @@ abstract public class Base {
                 .withVaultName(vaultName) //
                 .withJobParameters(new JobParameters() //
                         .withType("inventory-retrieval") //
-        //.withSNSTopic("*** provide SNS topic ARN ****") //
-        );
+                //.withSNSTopic("*** provide SNS topic ARN ****") //
+                );
 
         String jobId;
         try {
             LOG.info("Initiating inventory job...");
-            final InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
+            final InitiateJobResult initJobResult = glacierClient.initiateJob(initJobRequest);
             jobId = initJobResult.getJobId();
         } catch (final ResourceNotFoundException e) {
             // Ignore. No inventory is available.
@@ -210,7 +228,7 @@ abstract public class Base {
         LOG.info("Inventory job completed. Getting output...");
         final GetJobOutputRequest jobOutputRequest = new GetJobOutputRequest().withVaultName(vaultName)
                 .withJobId(jobId);
-        final GetJobOutputResult jobOutputResult = client.getJobOutput(jobOutputRequest);
+        final GetJobOutputResult jobOutputResult = glacierClient.getJobOutput(jobOutputRequest);
 
         final ObjectMapper mapper = new ObjectMapper();
         final ObjectNode rootNode = mapper.readValue(jobOutputResult.getBody(), ObjectNode.class);
@@ -240,7 +258,8 @@ abstract public class Base {
 
     void waitForJob(final String vaultName, final String jobId) throws Exception {
         while (true) {
-            final DescribeJobResult describeJobResult = client.describeJob(new DescribeJobRequest(vaultName, jobId));
+            final DescribeJobResult describeJobResult = glacierClient
+                    .describeJob(new DescribeJobRequest(vaultName, jobId));
             final Boolean completed = describeJobResult.getCompleted();
             if (completed != null && completed)
                 break;

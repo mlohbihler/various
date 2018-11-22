@@ -78,7 +78,7 @@ public class Restore extends Base {
                 );
 
         LOG.info("Initiating archive retrieval job...");
-        final InitiateJobResult initJobResult = client.initiateJob(initJobRequest);
+        final InitiateJobResult initJobResult = glacierClient.initiateJob(initJobRequest);
         final String jobId = initJobResult.getJobId();
 
         // Wait for the job to complete.
@@ -88,7 +88,7 @@ public class Restore extends Base {
         LOG.info("Archive retrieval job completed. Getting output...");
         final GetJobOutputRequest jobOutputRequest = new GetJobOutputRequest().withVaultName(vaultName)
                 .withJobId(jobId);
-        final GetJobOutputResult jobOutputResult = client.getJobOutput(jobOutputRequest);
+        final GetJobOutputResult jobOutputResult = glacierClient.getJobOutput(jobOutputRequest);
 
         final File file = new File(filename);
         try (final FileOutputStream fos = new FileOutputStream(file)) {

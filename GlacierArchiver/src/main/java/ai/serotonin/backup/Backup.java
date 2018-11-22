@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.glacier.model.DeleteArchiveRequest;
 import com.amazonaws.services.glacier.transfer.ArchiveTransferManager;
+import com.amazonaws.services.glacier.transfer.ArchiveTransferManagerBuilder;
 import com.amazonaws.services.glacier.transfer.UploadResult;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -135,7 +136,12 @@ public class Backup extends Base {
 
     private void copyToGlacier(final File file) throws Exception {
         final String vaultName = getVaultName();
-        final ArchiveTransferManager atm = new ArchiveTransferManager(client, credentials);
+        final ArchiveTransferManager atm = new ArchiveTransferManagerBuilder() //
+                .withGlacierClient(glacierClient) //
+                .withSqsClient(sqsClient) //
+                .withSnsClient(snsClient) //
+                .build();
+        //        final ArchiveTransferManager atm = new ArchiveTransferManager(client, credentials);
         final UploadResult result = atm.upload(vaultName, file.getName(), file);
         LOG.info("Upload archive ID: " + result.getArchiveId());
     }
@@ -160,7 +166,7 @@ public class Backup extends Base {
                 final DeleteArchiveRequest request = new DeleteArchiveRequest() //
                         .withVaultName(vaultName) //
                         .withArchiveId(archive.id);
-                client.deleteArchive(request);
+                glacierClient.deleteArchive(request);
             }
 
             final StringBuilder sb = new StringBuilder();
