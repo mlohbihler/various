@@ -14,6 +14,7 @@ import manfredHero from './img/manfred-hero.jpg'
 import manfredGuts from './img/manfred-guts.jpg'
 import manfredUltra from './img/manfred-ultra.jpg'
 import mannabase from './img/mannabase.png'
+import puzzle from './img/puzzle.png'
 import reflection from './img/espejo-infinito_619.jpg'
 import rocksHero from './img/rocks-hero.jpg'
 import rocksWide from './img/rocks-wide.jpg'
@@ -103,6 +104,19 @@ export default class App extends React.Component {
             <div className="container">
               <div className="row">
                 <div className="card">
+                  <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">
+                    <img src={puzzle} alt="Puzzle" style={{padding: "0px 0px"}}/>
+                  </a>
+                  <p className="card-text">
+                    2019 - After watching <a target="_blank" rel="noopener noreferrer" href="https://www.ted.com/talks/alex_rosenthal_the_joyful_perplexing_world_of_puzzle_hunts">Alex 
+                    Rosenthal&apos;s TED talk</a> on the MIT puzzlehunt, I was hopelessly inspired. I then spent the better part of two weeks conceiving,
+                    creating, and deploying my own Manna-branded puzzle. As of the time of writing it is still being tested, but I will update here with
+                    any interesting outcomes. In the meantime, why
+                    not <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">try it yourself</a>?
+                  </p>
+                </div>
+
+                <div className="card">
                   <img src={arb} alt="Crpto arbitrage" style={{padding: "50px 0px"}}/>
                   <p className="card-text">
                     2018 - I literally woke up in the middle of the night with this realization; crypto exchanges are arbitrage opportunities. Any exchange
@@ -131,7 +145,7 @@ export default class App extends React.Component {
                 </div>
 
                 <div className="card">
-                  <a href="http://www.grantcoin.org/">
+                  <a href="http://www.mannabase.org/">
                     <img src={mannabase} alt="Mannabase logo" style={{padding: "74px 0px"}}/>
                   </a>
                   <p className="card-text">
@@ -278,7 +292,6 @@ export default class App extends React.Component {
 
 
                 {/*
-
                   - nullstat
                   - TinyTSDB
                   - sero-warp
