@@ -145,7 +145,7 @@ export default class App extends React.Component {
                 </div>
 
                 <div className="card">
-                  <a href="http://www.mannabase.org/">
+                  <a href="http://www.mannabase.com/">
                     <img src={mannabase} alt="Mannabase logo" style={{padding: "74px 0px"}}/>
                   </a>
                   <p className="card-text">
