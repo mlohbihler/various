@@ -1,6 +1,6 @@
 Notes
 =====
-This is the source of the portfolio app for Matthew A. Lohbihler. See the site at [https://serotonin.ai].
+This is the source of the portfolio app for Matthew A. Lohbihler. See the site at <https://serotonin.ai>.
 
 Build
 =====
