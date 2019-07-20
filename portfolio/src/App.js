@@ -7,6 +7,7 @@ import './App.css'
 
 import arb from './img/arb.png'
 import comingSoon from './img/coming-soon.jpg'
+import dialr from './img/dialr.png'
 import dgbox from './img/dgbox.jpg'
 import hackerrank from './img/hackerrank.png'
 import konvaGraphics from './img/konva-graphics.png'
@@ -105,13 +106,23 @@ export default class App extends React.Component {
               <div className="row">
                 <div className="card">
                   <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">
+                    <img src={dialr} alt="Puzzle" style={{padding: "83.5px 0px"}}/>
+                  </a>
+                  <p className="card-text">
+                    2019 - Dial up your deployments with this online code deployer. Super fast and simple to use, this open source software it uses ideas
+                    from A/B testing to allow you to release new code to fractions of visitors at a time. Find the
+                    repo <a href="https://github.com/mlohbihler/dialr">here</a>.
+                  </p>
+                </div>
+
+                <div className="card">
+                  <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">
                     <img src={puzzle} alt="Puzzle" style={{padding: "0px 0px"}}/>
                   </a>
                   <p className="card-text">
                     2019 - After watching <a target="_blank" rel="noopener noreferrer" href="https://www.ted.com/talks/alex_rosenthal_the_joyful_perplexing_world_of_puzzle_hunts">Alex 
                     Rosenthal&apos;s TED talk</a> on the MIT puzzlehunt, I was hopelessly inspired. I then spent the better part of two weeks conceiving,
-                    creating, and deploying my own Manna-branded puzzle. As of the time of writing it is still being tested, but I will update here with
-                    any interesting outcomes. In the meantime, why
+                    creating, and deploying my own Manna-branded puzzle. As of the time of writing only two parts of it have been solved. Why
                     not <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">try it yourself</a>?
                   </p>
                 </div>
@@ -122,12 +133,14 @@ export default class App extends React.Component {
                     2018 - I literally woke up in the middle of the night with this realization; crypto exchanges are arbitrage opportunities. Any exchange
                     where loops can be created through 3 or more markets would work. And with the thousands of exchanges there are in the world, there might
                     actually be some money to be made. Well, that turned out to be true, and even better, pretty much every exchange there is offers an API
-                    where this can be automated. Which I did. And no, you can&apos;t have the source code. But I will say that I have 7 EC2 instances running
-                    it, and the software easily pays for them all.
+                    where this can be automated. Which I did. And it worked. I had 7 EC2 instances running it, costing a small fraction of the profits. After
+                    about 3 months though, it appears that the exchange I was using started doing this themselves, and since you can&apos;t compete with the 
+                    exchange itself, the profits dropped off a cliff.
                   </p>
                 </div>
 
-                <div className="card">
+                {/* TODO this doesn't work anymore probably because of a Konva upgrade. Needs to be fixed */}
+                {/* <div className="card">
                   <img src={konvaGraphics} alt="Konva graphics" onClick={konvaToggle} className="pointer"/>
                   <p className="card-text">2017 - Interactive canvas graphics built with Konva and ReactKonva</p>
 
@@ -142,7 +155,7 @@ export default class App extends React.Component {
                       The whole thing ran on a Raspberry Pi with a 7&quot; touch screen.
                     </ModalBody>
                   </Modal>
-                </div>
+                </div> */}
 
                 <div className="card">
                   <a href="http://www.mannabase.com/">
@@ -271,14 +284,11 @@ export default class App extends React.Component {
                 </div>
 
                 <div className="card">
-                  <a href="http://www.dglogik.com/company/iot-news/146-2013-cta-winner-in-two-categories">
-                    <img src={dgbox} alt="DGBox" style={{padding: "51px 35px"}}/>
-                  </a>
+                  <img src={dgbox} alt="DGBox" style={{padding: "51px 35px"}}/>
                   <p className="card-text">
                     2013 - This was paid work, but it just turned out so nice. I worked independently with DGLogik over the course of a year to create
                     DGBox, a building controls appliance. It was based upon Mango, and customized for use in a dedicted Beaglebone platform. It won
-                    the <a href="http://www.dglogik.com/company/iot-news/146-2013-cta-winner-in-two-categories">ControlTrends Awards Commercial Product
-                    of the Year</a>.
+                    the ControlTrends Awards Commercial Product of the Year.
                   </p>
                 </div>
 
