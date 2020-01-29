@@ -105,8 +105,8 @@ export default class App extends React.Component {
             <div className="container">
               <div className="row">
                 <div className="card">
-                  <a href="https://mannabase.com/030B04010A01020C03020806030902010D0F030804010C0102240701080502460D.html">
-                    <img src={dialr} alt="Puzzle" style={{padding: "83.5px 0px"}}/>
+                  <a href="https://github.com/mlohbihler/dialr">
+                    <img src={dialr} alt="DialR" style={{padding: "83.5px 0px"}}/>
                   </a>
                   <p className="card-text">
                     2019 - Dial up your deployments with this online code deployer. Super fast and simple to use, this open source software it uses ideas
