@@ -1,0 +1,317 @@
+:root {
+  --cube-scale: 3;
+  --cube-bkgd: #0060600d;
+  --cube-edge: #00608688;
+
+  font-family: 'century gothic', Helvetica, Arial, sans-serif;
+
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+}
+
+* {
+  margin: 0;
+}
+
+body {
+  background-color: #ccc;
+  height: 100%;
+}
+
+@media (max-width: 480px) {
+  #header {
+    flex-direction: column;
+  }
+}
+
+#container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+
+  #header {
+    background: linear-gradient(#4080ff, #b0d0ff);
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    min-height: 150px;
+
+    #name {
+      position: relative; /* To position the cube */
+      h1 {
+        padding-left: 100px;
+      }
+    }
+
+    li {
+      list-style-type: circle;
+      padding-right: 20px;
+
+      a {
+        color: inherit;
+        text-decoration: none;
+
+        :visited {
+          color: inherit;
+        }
+      }
+    }
+  }
+
+  #background-cover-container {
+    position: relative;
+
+    #background-cover {
+      position: absolute;
+      width: 100%;
+      height: 20px;
+      background-color: #b0d0ff;
+    }
+  }
+
+  #projects {
+    overflow-x: scroll;
+    scrollbar-width: none;
+
+    section {
+      background-image: linear-gradient(#fff 100px, #ccc 300px);
+      /* background-image: linear-gradient(#ccc, 10%, #fff); */
+      position: sticky;
+      position: -webkit-sticky;
+      top: 0px;
+      min-height: 250px;
+      /* background-color: #ffffff; */
+      padding: 20px 50px 20px 100px;
+      border-radius: 20px 20px 0 0;
+
+      h3 {
+        font-size: 20px;
+        color: #4080ff;
+        padding-bottom: 10px;
+      }
+
+      p,
+      li {
+        color: #333;
+        /* font-family: Verdana, Geneva, Tahoma, sans-serif; */
+        font-size: larger;
+      }
+
+      img {
+        &.right {
+          padding-left: 40px;
+          float: right;
+        }
+
+        &.left {
+          padding-right: 40px;
+          float: left;
+        }
+      }
+
+      a {
+        color: #4080ff;
+
+        :visited {
+          color: inherit;
+        }
+      }
+    }
+  }
+
+  #footer {
+    text-align: center;
+    font-size: 13px;
+    padding: 2px;
+    color: #555;
+  }
+}
+
+/**
+ * Spinny Cube thing
+*/
+
+/* #index {
+  text-align: center;
+  font-family: Calibri;
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  transform: translateX(-50%) translateY(-50%);
+} */
+
+.cube-container {
+  position: absolute;
+  top: 0;
+  left: 20px;
+  /* right: 0; */
+  bottom: 0;
+  margin: auto;
+
+  width: calc(var(--cube-scale) * 24px);
+  height: calc(var(--cube-scale) * 24px);
+
+  .cube {
+    perspective: calc(var(--cube-scale) * 1000px);
+    width: calc(var(--cube-scale) * 12px);
+    height: calc(var(--cube-scale) * 12px);
+    position: relative;
+    display: inline-block;
+    text-align: initial;
+    top: calc(var(--cube-scale) * 6px);
+    left: calc(var(--cube-scale) * 6px);
+
+    div {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      transform: translateZ(-24px);
+      display: inline-block;
+      animation: spincube 3s linear infinite;
+    }
+
+    i {
+      position: absolute;
+      height: calc(var(--cube-scale) * 12px);
+      width: calc(var(--cube-scale) * 12px);
+      background: var(--cube-bkgd);
+      border: 1px solid var(--cube-edge);
+    }
+
+    .front {
+      transform: rotateY(0deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+    .back {
+      transform: rotateX(180deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+    .right {
+      transform: rotateY(90deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+    .left {
+      transform: rotateY(-90deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+    .top {
+      transform: rotateX(90deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+    .bottom {
+      transform: rotateX(-90deg) translateZ(calc(var(--cube-scale) * 6px));
+    }
+  }
+}
+@-moz-keyframes spincube {
+  0% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(0deg) rotateZ(0);
+  }
+  100% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(360deg) rotateZ(90deg);
+  }
+}
+@-webkit-keyframes spincube {
+  0% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(0deg) rotateZ(0);
+  }
+  100% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(360deg) rotateZ(90deg);
+  }
+}
+@-o-keyframes spincube {
+  0% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(0deg) rotateZ(0);
+  }
+  100% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(360deg) rotateZ(90deg);
+  }
+}
+@keyframes spincube {
+  0% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(0deg) rotateZ(0);
+  }
+  100% {
+    transform: translatez(calc(var(--cube-scale) * -24px)) rotateX(30deg) rotateY(360deg) rotateZ(90deg);
+  }
+}
+@keyframes scaleDownCenter {
+  to {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+/**
+ * Sudoku
+*/
+
+#sudoku {
+  margin-top: 20px;
+
+  table {
+    margin: 0 auto;
+    border: 4px solid #666;
+    border-collapse: collapse;
+    background-color: #fff;
+  }
+
+  td {
+    border: 2px solid #666;
+    padding: 0;
+  }
+
+  table table {
+    border: 2px solid #666;
+    margin: 0;
+  }
+
+  td td {
+    padding: 2px 4px;
+  }
+
+  input {
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    border: none;
+  }
+
+  .btns {
+    margin-top: 20px;
+  }
+
+  .alert {
+    margin-top: 20px;
+  }
+}
+
+#sudoku-buttons {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+
+  button {
+    border-radius: 5px;
+    border: 1px solid;
+    padding: 5px 10px;
+
+    &:hover {
+      background-color: #80b0ff;
+    }
+  }
+}
+
+#sudoku-message-container {
+  margin-top: 40px;
+  text-align: center;
+}
+
+#sudoku-message {
+  width: auto;
+  padding: 20px;
+  border: 1px solid #4080ff;
+  border-radius: 10px;
+}
