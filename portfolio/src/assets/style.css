@@ -76,15 +76,13 @@ body {
   #projects {
     overflow-x: scroll;
     scrollbar-width: none;
+    z-index: 1;
 
     section {
       background-image: linear-gradient(#fff 100px, #ccc 300px);
-      /* background-image: linear-gradient(#ccc, 10%, #fff); */
-      position: sticky;
-      position: -webkit-sticky;
+      /* position: sticky; */
       top: 0px;
       min-height: 250px;
-      /* background-color: #ffffff; */
       padding: 20px 50px 20px 100px;
       border-radius: 20px 20px 0 0;
 
@@ -305,13 +303,15 @@ body {
 }
 
 #sudoku-message-container {
-  margin-top: 40px;
+  margin: 40px;
   text-align: center;
 }
 
 #sudoku-message {
   width: auto;
   padding: 20px;
-  border: 1px solid #4080ff;
+  border: 1px solid #80b0ff;
+  color: #4080ff;
+  font-weight: 600;
   border-radius: 10px;
 }

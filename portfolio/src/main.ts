@@ -36,7 +36,7 @@ let state = [
 const updateState = (newState: string[][]) => {
   state = newState
   _0to8Sq((row, col) => {
-    getRequiredElementById(cellName(row, col)).setAttribute('value', state[row][col])
+    ;(<HTMLInputElement>getRequiredElementById(cellName(row, col))).value = state[row][col]
   })
 }
 
@@ -104,19 +104,19 @@ const createSudoku = () => {
   createElement(buttons, '<button type="button">World&apos;s Hardest</button>').addEventListener('click', hardest)
 
   _0to8Sq((row, col) => {
-    const cell = getRequiredElementById(cellName(row, col))
-    cell.setAttribute('value', state[row][col])
+    const cell = getRequiredElementById(cellName(row, col)) as HTMLInputElement
+    cell.value = state[row][col]
     cell.addEventListener('change', e => cellChanged(<HTMLInputElement>e.target, row, col))
     cell.addEventListener('focus', e => (<HTMLInputElement>e.target).select())
   })
 }
 
 const cellChanged = (cell: HTMLInputElement, row: number, col: number) => {
-  let newValue = cell.value
+  let newValue = cell.value.trim()
   if (newValue.length > 1) {
     newValue = newValue.substring(newValue.length - 1)
   }
-  if (/^[ 1-9]$/.test(newValue)) {
+  if (newValue === '' || /^[ 1-9]$/.test(newValue)) {
     const copy: string[][] = []
     _1to9(i => copy.push(state[i - 1].slice()))
     copy[row][col] = newValue
